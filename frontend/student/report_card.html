@@ -13,145 +13,186 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         body {
-            background: #f8fafc;
-            color: #1e293b;
+            background: #080a14;
+            color: #f8fafc;
         }
 
         .report-container {
-            max-width: 900px;
-            margin: 2rem auto;
-            background: white;
-            padding: 3rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 40px -8px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
+            max-width: 960px;
+            margin: 3rem auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(14, 19, 36, 0.85);
+            padding: 3.5rem;
+            border-radius: 24px;
+            box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.35), 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(28px) saturate(200%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%);
             min-height: 80vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 35%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-radius: inherit;
         }
 
         .report-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(168, 85, 247, 0.4);
+            padding-bottom: 1.75rem;
+            margin-bottom: 2.25rem;
         }
 
         .org-details h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #2563eb;
+            font-size: 1.85rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin: 0 0 0.25rem 0;
         }
 
         .org-details p {
-            color: #64748b;
-            font-size: 0.9rem;
+            color: #94a3b8;
+            font-size: 0.88rem;
+            margin: 0;
         }
 
         .report-title {
             text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.35rem;
+            font-weight: 800;
             text-transform: uppercase;
+            letter-spacing: 1.5px;
             margin-bottom: 2rem;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem;
-            background: #f8fafc;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.15));
+            border-radius: 12px;
             display: inline-block;
             width: 100%;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.25);
         }
 
         .student-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.25rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.25rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .detail-row {
             display: flex;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 0.4rem;
         }
 
         .detail-label {
             font-weight: 600;
-            width: 120px;
-            color: #64748b;
+            width: 130px;
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
 
         .detail-value {
-            font-weight: 500;
-            color: #1e293b;
+            font-weight: 700;
+            color: #f8fafc;
+            font-size: 0.95rem;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 2rem;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        th,
-        td {
+        th, td {
             padding: 1rem;
             text-align: left;
-            border: 1px solid #e2e8f0;
-            color: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f8fafc;
         }
 
         th {
-            background: #f1f5f9;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
             font-weight: 700;
             text-transform: uppercase;
-            font-size: 0.85rem;
-            color: #64748b;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            letter-spacing: 0.5px;
         }
 
         .grade-badge {
-            font-weight: 700;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.82rem;
+            display: inline-block;
         }
 
         .grade-a {
-            color: #15803d;
-            background: #dcfce7;
+            color: #4ade80;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(74, 222, 128, 0.4);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
         }
 
         .grade-b {
-            color: #1d4ed8;
-            background: #dbeafe;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
         }
 
         .grade-c {
-            color: #b45309;
-            background: #fef3c7;
+            color: #fde047;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(253, 224, 71, 0.4);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
         }
 
         .grade-f {
-            color: #b91c1c;
-            background: #fee2e2;
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.4);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
         }
 
         .footer {
             margin-top: auto;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.25rem;
             text-align: center;
-            font-size: 0.8rem;
-            color: #64748b;
+            font-size: 0.82rem;
+            color: var(--text-dim);
         }
 
         .signature-section {
             display: flex;
             justify-content: space-between;
-            margin-top: 4rem;
+            margin-top: 3.5rem;
             margin-bottom: 2rem;
         }
 
@@ -161,17 +202,17 @@
         }
 
         .signature-line {
-            border-bottom: 1px solid #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             margin-bottom: 0.5rem;
             height: 40px;
         }
 
         .print-btn {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            bottom: 2.5rem;
+            right: 2.5rem;
             z-index: 100;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
         }
 
         .back-btn {
@@ -182,25 +223,46 @@
         }
 
         @media print {
-
             .print-btn,
             .back-btn {
                 display: none;
             }
 
             body {
-                background: white;
+                background: white !important;
+                color: #000000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
             .report-container {
-                box-shadow: none;
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                max-width: none;
-                border: none;
+                box-shadow: none !important;
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                border: none !important;
+            }
+
+            th, td {
+                color: black !important;
+                border-color: #cbd5e1 !important;
+            }
+
+            th {
+                background: #f1f5f9 !important;
+            }
+
+            .report-title {
+                color: black !important;
+                background: #f8fafc !important;
+                border-color: #cbd5e1 !important;
+            }
+
+            .signature-line {
+                border-color: black !important;
             }
         }
     </style>
@@ -208,7 +270,7 @@
 
 <body>
 
-    <button onclick="window.location.href='index.html'" class="btn btn-outline back-btn" style="color: #1e293b; border-color: #cbd5e1; background: white;">← Back to Dashboard</button>
+    <button onclick="window.location.href='index.html'" class="btn btn-outline back-btn">← Back to Dashboard</button>
     <button onclick="window.print()" class="btn btn-primary print-btn">🖨 Print Report Card</button>
 
     <div class="report-container" id="reportContent">

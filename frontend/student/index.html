@@ -13,52 +13,74 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         .exam-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius);
-            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(14, 19, 36, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            padding: 1.65rem;
             transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            box-shadow: var(--shadow-sm);
-            backdrop-filter: blur(var(--glass-blur));
-            -webkit-backdrop-filter: blur(var(--glass-blur));
+            gap: 1.1rem;
+            box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.3), 0 18px 40px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.12);
+            backdrop-filter: blur(24px) saturate(190%);
+            -webkit-backdrop-filter: blur(24px) saturate(190%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .exam-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-radius: inherit;
         }
 
         .exam-card:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: var(--shadow-lg), 0 0 40px -8px var(--glow-primary);
-            border-color: var(--primary);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.5), 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 35px rgba(168, 85, 247, 0.35);
+            border-color: rgba(192, 132, 252, 0.6);
         }
 
         .exam-meta {
             display: flex;
-            gap: 1rem;
+            gap: 0.85rem;
             font-size: 0.85rem;
             color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.04);
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.6rem 0.85rem;
+            border-radius: 10px;
+            backdrop-filter: blur(6px);
         }
 
         .status-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 4px 12px;
             border-radius: 99px;
             font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-block;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.4px;
         }
 
         .status-active {
-            background: rgba(52, 211, 153, 0.15);
-            color: #34d399;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%), rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.5);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
         }
 
         .status-upcoming {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%), rgba(245, 158, 11, 0.2);
+            color: #fde047;
+            border: 1px solid rgba(253, 224, 71, 0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
         }
     </style>
 </head>
@@ -67,56 +89,59 @@
     <img src="../assets/img/vignan_header.png" alt="Header"
         style="display: block; width: 100%; max-height: 120px; object-fit: contain; background: white;">
     <nav class="glass-panel"
-        style="position: sticky; top: 1rem; z-index: 100; margin: 1rem auto; width: 95%; max-width: 1200px; padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; border-radius: 99px; background: rgba(15, 14, 23, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 30px rgba(0,0,0,0.3);">
+        style="position: sticky; top: 1rem; z-index: 100; margin: 1rem auto; width: 95%; max-width: 1240px; padding: 0.85rem 2rem; display: flex; justify-content: space-between; align-items: center; border-radius: 99px; background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%), rgba(14, 19, 36, 0.75); backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%); border: 1px solid rgba(255,255,255,0.16); box-shadow: inset 0 1.5px 1px 0 rgba(255,255,255,0.35), 0 20px 40px rgba(0,0,0,0.5), 0 0 30px rgba(99,102,241,0.15);">
         <div style="display: flex; align-items: center; gap: 1rem;">
-
-            <div class="logo" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">
-                Examination <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Student</span>
+            <div class="logo" style="font-size: 1.35rem; font-weight: 800; color: #ffffff; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="background: linear-gradient(135deg, #c084fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VIGNAN MASTERY</span> <span style="font-size: 0.75rem; background: rgba(99,102,241,0.25); border: 1px solid rgba(99,102,241,0.45); color: #c7d2fe; padding: 2px 8px; border-radius: 99px; font-weight: 700;">STUDENT</span>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <div id="studentName" style="font-weight: 500;">Student Name</div>
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div id="studentName" style="font-weight: 600; color: #f8fafc;">Student Name</div>
             <a href="report_card.html" class="btn"
-                style="padding: 0.5rem 1rem; font-size: 0.85rem; border: none; color: white; margin-right: 0.5rem; background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: opacity 0.2s;">
-                📊 Report Card
+                style="padding: 0.55rem 1.15rem; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); color: white; background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, #6366f1, #a855f7, #ec4899); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(168,85,247,0.35);">
+                📊 Overall Report Card
             </a>
             <button onclick="Auth.logout()" class="btn btn-outline"
-                style="padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--danger); border-color: transparent;">Logout</button>
+                style="padding: 0.55rem 1.15rem; font-size: 0.85rem; color: #f87171; border-color: rgba(239,68,68,0.35);">Logout</button>
         </div>
     </nav>
 
     <main class="container" style="padding-top: 2rem;">
 
         <!-- Welcome Section -->
-        <section style="margin-bottom: 3rem;" class="fade-in">
-            <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Ready to excel?</h1>
-            <p style="color: var(--text-muted);">View your upcoming exams and performance below.</p>
+        <section style="margin-bottom: 2.5rem;" class="fade-in">
+            <h1 style="font-size: 2.75rem; margin-bottom: 0.5rem; font-weight: 900; font-family: 'Outfit', sans-serif;">
+                Welcome to your <span style="background: linear-gradient(135deg, #c084fc, #818cf8, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Assessment Portal</span>
+            </h1>
+            <p style="color: #94a3b8; font-size: 1.05rem;">Access live examinations, psychometric surveys, and deep performance analytics.</p>
         </section>
 
         <!-- Stats Row -->
         <section
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;"
             class="fade-in">
-            <div class="glass-panel float-card" style="padding: 1.5rem;">
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">My Rank</h3>
-                <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="stat-rank">--</div>
-                <div style="font-size: 0.8rem; color: var(--success);" id="stat-percentile">--</div>
+            <div class="glass-panel" style="padding: 1.75rem;">
+                <h3 style="color: var(--text-muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem;">My Overall Rank</h3>
+                <div style="font-size: 2.5rem; font-weight: 900; color: #818cf8; font-family: 'Outfit', sans-serif;" id="stat-rank">--</div>
+                <div style="font-size: 0.82rem; color: #4ade80; font-weight: 600; margin-top: 0.25rem;" id="stat-percentile">--</div>
             </div>
-            <div class="glass-panel float-card" style="padding: 1.5rem;">
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Exams Taken</h3>
-                <div style="font-size: 2rem; font-weight: 700;" id="stat-exams-taken">0</div>
+            <div class="glass-panel" style="padding: 1.75rem;">
+                <h3 style="color: var(--text-muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem;">Exams Completed</h3>
+                <div style="font-size: 2.5rem; font-weight: 900; color: #ffffff; font-family: 'Outfit', sans-serif;" id="stat-exams-taken">0</div>
+                <div style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.25rem;">Evaluated Submissions</div>
             </div>
-            <div class="glass-panel float-card" style="padding: 1.5rem;">
-                <h3 style="color: var(--text-muted); font-size: 0.9rem;">Avg. Score</h3>
-                <div style="font-size: 2rem; font-weight: 700; color: var(--secondary);" id="stat-avg-score">--</div>
+            <div class="glass-panel" style="padding: 1.75rem;">
+                <h3 style="color: var(--text-muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 0.5rem;">Average Score</h3>
+                <div style="font-size: 2.5rem; font-weight: 900; color: #c084fc; font-family: 'Outfit', sans-serif;" id="stat-avg-score">--</div>
+                <div style="font-size: 0.82rem; color: var(--text-dim); margin-top: 0.25rem;">Overall Mastery Index</div>
             </div>
         </section>
 
         <!-- Available Exams -->
         <section>
-            <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
-                Available Exams
-                <span class="status-badge status-active">Live</span>
+            <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; font-size: 1.6rem; font-family: 'Outfit', sans-serif;">
+                Available Assessments
+                <span class="status-badge status-active">⚡ LIVE</span>
             </h2>
 
             <div id="examList"

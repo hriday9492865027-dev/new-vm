@@ -12,7 +12,78 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700&display=swap"
         rel="stylesheet">
     <!-- Styles -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .nav-glass {
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+            margin: 1rem auto 2rem;
+            width: 95%;
+            max-width: 1240px;
+            padding: 0.85rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 99px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%), rgba(14, 19, 36, 0.75);
+            backdrop-filter: blur(28px) saturate(200%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: inset 0 1.5px 1px 0 rgba(255,255,255,0.35), 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.15);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1.25rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+            border: 1px solid rgba(192, 132, 252, 0.5);
+            color: #e0e7ff;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 20px rgba(168, 85, 247, 0.35);
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        .hero-title {
+            font-size: 3.8rem;
+            font-weight: 900;
+            line-height: 1.15;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.45));
+        }
+
+        .stat-card-premium {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 20, 38, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 20px;
+            padding: 1.75rem 2.5rem;
+            box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.35), 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15);
+            backdrop-filter: blur(24px);
+            min-width: 220px;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stat-card-premium:hover {
+            transform: translateY(-8px) scale(1.03);
+            border-color: rgba(192, 132, 252, 0.6);
+            box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.5), 0 25px 55px rgba(0, 0, 0, 0.75), 0 0 45px rgba(168, 85, 247, 0.35);
+        }
+    </style>
 </head>
 
 <body>
@@ -20,75 +91,68 @@
         style="display: block; width: 100%; height: auto; max-height: 120px; object-fit: contain; background: white; margin: 0 auto; ">
     <div class="main-wrapper">
         <!-- Navigation -->
-        <nav class="glass-panel nav-glass">
-            <!-- Spacer for Grid Balance -->
-            <div></div>
+        <nav class="nav-glass">
             <div class="logo"
-                style="font-size: 1.5rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
-                <img src="assets/img/Logo.png" alt="Logo" style="height: 40px; width: auto;">
-                VIGNAN MASTERY 1.0
+                style="font-size: 1.45rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.65rem; font-family: 'Outfit', sans-serif;">
+                <img src="assets/img/Logo.png" alt="Logo" style="height: 38px; width: auto; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">
+                <span>VIGNAN <span class="highlight">MASTERY</span></span>
             </div>
-            <div class="auth-buttons" style="justify-self: end;">
-                <button onclick="showLoginModel('student')" class="btn btn-outline"
-                    style="margin-right: 0.5rem;">Student Login</button>
-                    
-                <button onclick="showLoginModel('admin')" class="btn btn-primary">Admin Portal</button>
+            <div class="auth-buttons" style="display: flex; gap: 0.75rem; align-items: center;">
+                <button onclick="showLoginModal('student')" class="btn btn-outline">🎓 Student Login</button>
+                <button onclick="showLoginModal('admin')" class="btn btn-primary">⚡ Admin Portal</button>
             </div>
         </nav>
 
         <!-- Hero Section -->
         <section class="container"
-            style="padding-top: 0px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; text-align: center;">
+            style="padding-top: 2rem; min-height: 80vh; display: flex; flex-direction: column; align-items: center; text-align: center;">
             <div class="fade-in">
                 <div class="hero-badge">
-                    🚀 The #1 Exam Platform
+                    ✨ NEXT-GENERATION ASSESSMENT PLATFORM
                 </div>
                 <h1 class="hero-title">
                     "It always seems <br>
-                    <span class="highlight">impossible </span>
-                    until it's done"
+                    <span class="highlight">impossible</span> until it's done"
                 </h1>
                 <p
-                    style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 3rem; line-height: 1.6;">
-                    Participate exams with integrity and style. A beautiful world with technology will be yours
+                    style="font-size: 1.25rem; color: #cbd5e1; max-width: 650px; margin: 0 auto 3rem; line-height: 1.65;">
+                    Empowering students and faculty with real-time psychometric intelligence, coding evaluation, and automated survey insights.
                 </p>
-                <div style="display: flex; gap: 2rem; justify-content: center;">
-                    <div class="stat-card-premium float-card">
-                        <h3 style="color: var(--text-main); font-size: 2.5rem; font-weight: 800;">6000+</h3>
-                        <p style="color: var(--text-muted); font-weight: 500;">Active Students</p>
+                <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+                    <div class="stat-card-premium">
+                        <h3 style="color: #ffffff; font-size: 2.75rem; font-weight: 900; margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">6000+</h3>
+                        <p style="color: #94a3b8; font-weight: 600; font-size: 0.95rem;">Active Students</p>
                     </div>
-                    <div class="stat-card-premium float-card">
-                        <h3 style="color: var(--text-main); font-size: 2.5rem; font-weight: 800;">99.9%</h3>
-                        <p style="color: var(--text-muted); font-weight: 500;">Platform Uptime</p>
+                    <div class="stat-card-premium">
+                        <h3 style="color: #ffffff; font-size: 2.75rem; font-weight: 900; margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #ffffff 40%, #4ade80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">99.9%</h3>
+                        <p style="color: #94a3b8; font-weight: 600; font-size: 0.95rem;">Platform Reliability</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Login Modal (Hidden by default) -->
-        <div id="loginModal"
-            style="display: none;" class="modal-glass-overlay">
-            <div class="modal-glass-content">
+        <div id="loginModal" style="display: none;" class="modal-glass-overlay">
+            <div class="modal-glass-content" style="max-width: 480px;">
                 <button onclick="hideLoginModal()"
-                    style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem;">&times;</button>
+                    style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
 
-                <h2 id="modalTitle" style="margin-bottom: 2rem; text-align: center;">Login</h2>
+                <h2 id="modalTitle" style="margin-bottom: 1.75rem; text-align: center; font-size: 1.75rem; font-family: 'Outfit', sans-serif;">Login</h2>
 
                 <form id="loginForm" onsubmit="handleLogin(event)">
                     <div class="input-group">
                         <label>ID / Username</label>
-                        <input type="text" id="username" class="input-field" placeholder="Enter your ID" required
-                            style="background: var(--background);">
+                        <input type="text" id="username" class="input-field" placeholder="Enter your ID" required>
                     </div>
                     <div class="input-group" id="studentDetailsGroup"
                         style="display:none; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
                             <label>Section</label>
-                            <input type="text" id="loginSection" class="input-field" style="background: var(--background);" placeholder="e.g. 1" maxlength="1" pattern="\d" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                            <input type="text" id="loginSection" class="input-field" placeholder="e.g. 1" maxlength="1" pattern="\d" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
                         </div>
                         <div>
                             <label>Branch</label>
-                            <select id="loginBranch" class="input-field" style="background: var(--background);">
+                            <select id="loginBranch" class="input-field">
                                 <option value="CSE">CSE</option>
                                 <option value="ECE">ECE</option>
                                 <option value="EEE">EEE</option>
@@ -102,7 +166,7 @@
                         </div>
                         <div style="grid-column: 1 / -1;">
                             <label>Batch</label>
-                            <select id="loginBatch" class="input-field" style="background: var(--background);">
+                            <select id="loginBatch" class="input-field">
                                 <option value="2022-2026">2022-2026</option>
                                 <option value="2023-2027">2023-2027</option>
                                 <option value="2024-2028">2024-2028</option>
@@ -114,9 +178,9 @@
                         <label>Password</label>
                         <div style="position: relative;">
                             <input type="password" id="password" class="input-field" placeholder="Enter password"
-                                required style="background: var(--background); padding-right: 2.5rem;">
+                                required style="padding-right: 2.75rem;">
                             <button type="button" onclick="togglePassword()"
-                                style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                                style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted);">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -125,7 +189,7 @@
                             </button>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 0.5rem;">Sign In</button>
                 </form>
             </div>
         </div>
