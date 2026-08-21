@@ -1,0 +1,34 @@
+﻿1. How would you rate the overall quality of campus laboratory facilities?
+Type: MCQ
+a) Excellent - Modern equipment & well maintained
+b) Good - Adequate facilities
+c) Average - Needs periodic updates
+d) Needs Immediate Improvement
+
+2. Which technical domains or certifications are you interested in pursuing this academic year?
+Type: Multi Select
+a) Full Stack Web Development (React & Node.js)
+b) Artificial Intelligence & Machine Learning
+c) Cloud Architecture & DevOps (AWS / GCP / Docker)
+d) Cybersecurity & Ethical Hacking
+e) Data Science & Big Data Analytics
+f) Mobile Application Development (Flutter / Android)
+
+3. How satisfied are you with the university's career placement training and mock interview sessions?
+Type: MCQ
+a) Highly Satisfied
+b) Satisfied
+c) Neutral
+d) Dissatisfied
+
+4. Which extracurricular clubs or campus activities do you actively participate in?
+Type: Multi Select
+a) Coding & Open Source Club
+b) Robotics & IoT Club
+c) Sports, Athletics & Fitness
+d) Cultural, Music & Performing Arts
+e) Debating & Literary Society
+f) Social Service & NSS
+
+5. What constructive suggestions or ideas do you have to improve student learning experiences and campus infrastructure?
+Type: Text

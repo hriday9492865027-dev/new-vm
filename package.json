@@ -1,0 +1,9 @@
+{
+  "name": "vignan-mastery",
+  "version": "1.0.0",
+  "description": "Vignan Mastery - Next Gen Online Examination & Assessment Portal",
+  "scripts": {
+    "start:frontend": "cd frontend && node server.js",
+    "start:backend": "cd backend && node server.js"
+  }
+}

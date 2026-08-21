@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Multi-language Sandbox Runner (Builds the runner image)
+  runner:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.runner
+    image: vignan-mastery-runner
+    container_name: vignan-mastery-runner-init
+    command: ["echo", "Runner image ready"]
+
+  # Backend Compiler & API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vignan-mastery-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount Docker socket so backend can spin up sandboxed containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/compilor-docker:/tmp/compilor-docker
+    environment:
+      - PORT=4000
+      - DOCKER_RUNNER_IMAGE=vignan-mastery-runner
+    depends_on:
+      - runner
+
+  # Frontend Exam Portal
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vignan-mastery-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - backend

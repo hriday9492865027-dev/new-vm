@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Runner - ExamiNation</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Direct @font-face fallback for JetBrains Mono in Monaco Editor -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=block');
+    </style>
+    <!-- Styles -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        /* Force JetBrains Mono on Monaco editor text */
+        .monaco-editor .view-lines,
+        .monaco-editor .view-line,
+        .monaco-editor .view-line span,
+        .monaco-editor .view-line span span,
+        .monaco-editor .mtk1,
+        .monaco-editor .inputarea,
+        .monaco-editor .lines-content {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+        body {
+            height: 100vh;
+            overflow: hidden;
+            /* Prevent scrolling main body */
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(15, 14, 23, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .timer-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .main-layout {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 250px 1fr 350px;
+            height: calc(100vh - 60px);
+        }
+
+        .question-nav {
+            background: rgba(15, 14, 23, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .q-btn {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .q-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .q-btn.active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.15);
+            color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2), 0 0 20px -5px rgba(108, 99, 255, 0.3);
+        }
+
+        .q-btn.answered {
+            background: #e5e5e5;
+            color: #333;
+            border-color: #d4d4d4;
+        }
+
+        .q-btn.res-full {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .q-btn.res-half {
+            background: #f59e0b;
+            /* Orange/Yellow */
+            color: white;
+            border-color: #f59e0b;
+        }
+
+        .q-btn.res-partial {
+            background: #0ea5e9;
+            /* Skyblue */
+            color: white;
+            border-color: #0ea5e9;
+        }
+
+        .q-btn.res-fail {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .exam-area {
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .code-editor-panel {
+            grid-column: 3;
+            background: #1e1e1e;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .editor-header {
+            padding: 0.5rem 1rem;
+            background: #252526;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .lang-select {
+            background: #333;
+            color: #d4d4d4;
+            border: 1px solid #444;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        #codeArea {
+            flex: 1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            resize: none;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            outline: none;
+        }
+
+        #monaco-container {
+            flex: 1;
+            min-height: 0;
+            /* Prevent overflow issues */
+            width: 100%;
+        }
+
+        .console-output {
+            height: 150px;
+            background: #000;
+            color: #ccc;
+            padding: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            border-top: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        /* Overlay Styles */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Confetti Container */
+        .confetti-container {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            opacity: 0;
+            animation: confettiBurst 3s ease-out forwards;
+        }
+
+        @keyframes confettiBurst {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) rotate(0deg) scale(0);
+            }
+            10% {
+                opacity: 1;
+                transform: translate(var(--tx), var(--ty-start)) rotate(180deg) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty-end)) rotate(var(--rot)) scale(0.5);
+            }
+        }
+
+        .result-content {
+            position: relative;
+            z-index: 10001;
+            text-align: center;
+            animation: resultFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes resultFadeIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Celebration Text (≥40%) */
+        .celebration-emoji {
+            font-size: 5rem;
+            animation: bounceEmoji 1s ease infinite;
+            display: inline-block;
+        }
+
+        @keyframes bounceEmoji {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(-10deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-10px) rotate(10deg); }
+        }
+
+        .celebration-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #ef4444, #ec4899, #8b5cf6, #6366f1, #22d3ee);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .score-orb {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 1.5rem auto;
+            position: relative;
+        }
+
+        .score-orb.pass {
+            background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.3), rgba(139,92,246,0.2), rgba(236,72,153,0.1));
+            border: 3px solid rgba(99,102,241,0.5);
+            box-shadow: 0 0 60px rgba(99,102,241,0.3), 0 0 120px rgba(139,92,246,0.15), inset 0 0 30px rgba(99,102,241,0.1);
+            animation: orbPulse 2s ease-in-out infinite;
+        }
+
+        .score-orb.fail {
+            background: radial-gradient(circle at 30% 30%, rgba(148,163,184,0.2), rgba(100,116,139,0.1));
+            border: 3px solid rgba(148,163,184,0.3);
+            box-shadow: 0 0 40px rgba(148,163,184,0.15);
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { box-shadow: 0 0 60px rgba(99,102,241,0.3), 0 0 120px rgba(139,92,246,0.15); }
+            50% { box-shadow: 0 0 80px rgba(99,102,241,0.5), 0 0 160px rgba(139,92,246,0.25); }
+        }
+
+        .score-number {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .score-number.pass { color: #a78bfa; }
+        .score-number.fail { color: #94a3b8; }
+
+        .score-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .result-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .result-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            border-radius: 99px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .result-btn.pass-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+        }
+
+        .result-btn.pass-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99,102,241,0.5);
+        }
+
+        .result-btn.fail-btn {
+            background: rgba(148,163,184,0.15);
+            color: #cbd5e1;
+            border: 1px solid rgba(148,163,184,0.3);
+        }
+
+        .result-btn.fail-btn:hover {
+            background: rgba(148,163,184,0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Consolation (< 40%) */
+        .consolation-emoji {
+            font-size: 5rem;
+            animation: sadSway 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes sadSway {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(5px) rotate(-5deg); }
+        }
+
+        .consolation-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Rain effect for fail */
+        .rain-container {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .raindrop {
+            position: absolute;
+            top: -20px;
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(transparent, rgba(148,163,184,0.4));
+            border-radius: 0 0 2px 2px;
+            animation: rainFall linear infinite;
+        }
+
+        @keyframes rainFall {
+            to { transform: translateY(110vh); }
+        }
+    </style>
+</head>
+
+</head>
+
+<body>
+
+    <!-- Start Exam Overlay -->
+    <div id="startOverlay" class="overlay" style="display: flex; background: var(--surface); color: var(--text-main);">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-main);">Ready to Begin?</h1>
+        <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin-bottom: 2rem;">
+            This exam requires <strong>Fullscreen Mode</strong>.
+            <br>
+            Please do not exit fullscreen or switch tabs, as this will be recorded as a violation.
+        </p>
+        <button class="btn btn-primary" onclick="initExam()">Start Exam</button>
+    </div>
+
+    <!-- Error Overlay Removed -->
+
+    <!-- Warning Overlay (Hidden default) -->
+    <div id="warningOverlay" class="overlay" style="display: none;">
+        <h1 style="font-size: 4rem; color: var(--danger); margin-bottom: 1rem;">⚠️ WARNING ⚠️</h1>
+        <h2 style="margin-bottom: 2rem;">Exam Violation Detected</h2>
+        <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin-bottom: 3rem;">
+            You navigated away from the exam window. This has been recorded.
+            <br>
+            <strong>Warning <span id="warningCountDisplay">1</span> of 3</strong>
+        </p>
+        <button class="btn btn-primary" onclick="resumeExam()">I Understand, Resume Exam</button>
+    </div>
+
+    <!-- Success / Result Overlay (Hidden default) -->
+    <div id="confettiContainer" class="confetti-container" style="display: none;"></div>
+    <div id="rainContainer" class="rain-container" style="display: none;"></div>
+    <div id="resultOverlay" class="overlay"
+        style="display: none; background: rgba(15, 14, 23, 0.95); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+        <div class="result-content" id="resultContent">
+            <!-- Dynamically populated by showResultAnimation() -->
+        </div>
+    </div>
+
+    <div style="background: white; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <img src="../assets/img/vignan_header.png" alt="Header"
+            style="display: block; width: 100%; max-height: 100px; object-fit: contain; margin: 0 auto;">
+    </div>
+
+    <header>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button onclick="confirmExit()" class="btn btn-outline"
+                style="padding: 0.5rem 1rem; border:none; color: var(--text-muted);">← Quit</button>
+            <div style="font-weight: 700;">ExamiNation Runtime</div>
+        </div>
+
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <div id="studentInfo" style="font-size: 0.9rem; color: var(--text-muted);">John Doe (191FA04123)</div>
+            <div class="timer-badge" id="timer">--:--</div>
+            <button class="btn btn-primary" style="padding: 0.5rem 1rem; background: var(--success);"
+                onclick="submitExam()">Submit Exam</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- Question Navigation -->
+        <aside class="question-nav">
+            <h4 style="margin-bottom: 1rem;">Questions</h4>
+            <div class="question-grid" id="qNavGrid">
+                <!-- Generated by JS -->
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Legend</h4>
+                <div style="display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+                    <span style="width: 10px; height: 10px; background: var(--success); border-radius: 2px;"></span>
+                    Answered
+                </div>
+                <div
+                    style="display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    <span
+                        style="width: 10px; height: 10px; border: 1px solid var(--primary); border-radius: 2px;"></span>
+                    Current
+                </div>
+            </div>
+        </aside>
+
+        <!-- Exam Area -->
+        <main class="exam-area" id="questionArea">
+            <!-- Question Content Injected Here -->
+            <div class="fade-in" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                <p>Loading Exam...</p>
+            </div>
+        </main>
+
+        <!-- Code Editor (Visible only for coding questions) -->
+        <aside class="code-editor-panel" id="compilerPanel" style="display: none;">
+            <div class="editor-header">
+                <div style="display:flex; align-items:center;">
+                    <select id="langSelect" class="lang-select" onchange="updateEditorMode()">
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="csharp">C#</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="go">Go</option>
+                        <option value="swift">Swift</option>
+                        <option value="kotlin">Kotlin</option>
+                        <option value="rust">Rust</option>
+                        <option value="php">PHP</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="r">R</option>
+                        <option value="perl">Perl</option>
+                        <option value="scala">Scala</option>
+                        <option value="sql">SQL</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button
+                        style="background: var(--success); border: none; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;"
+                        onclick="runCode()">▶ Run</button>
+                    <button
+                        style="background: var(--primary); border: none; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;"
+                        onclick="submitCode()">✔ Submit</button>
+                </div>
+            </div>
+            <!-- Monaco Container -->
+            <div id="monaco-container" style="flex: 1; width: 100%;"></div>
+
+            <div style="height: 150px; display: flex; flex-direction: column; border-top: 1px solid #333;">
+                <div
+                    style="background: #252526; padding: 0.25rem 0.5rem; color: #ccc; font-size: 0.75rem; border-bottom: 1px solid #333;">
+                    Output</div>
+                <div class="console-output" id="consoleOutput" style="flex: 1; border: none;">
+                    > Ready...
+                </div>
+            </div>
+
+            <div style="height: 100px; display: flex; flex-direction: column; border-top: 1px solid #333;">
+                <div
+                    style="background: #252526; padding: 0.25rem 0.5rem; color: #ccc; font-size: 0.75rem; border-bottom: 1px solid #333;">
+                    Custom Input (stdin)</div>
+                <textarea id="customInput"
+                    style="flex: 1; background: #1e1e1e; color: #d4d4d4; border: none; padding: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: none; outline: none;"></textarea>
+            </div>
+        </aside>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script>
+        // Security & State
+        let warnings = 0;
+        const MAX_WARNINGS = 3;
+        let currentExam = null;
+        let currentAnswers = {}; // { qId: answer }
+        let codingResults = {}; // { qId: 'PASS' | 'FAIL' | null } - Strict Scoring
+
+        // Time Tracking State
+        let questionTimeData = {}; // { qId: seconds (integer) }
+        let currentQuestionStartTime = null;
+        let activeQuestionId = null;
+
+        // Init
+        const params = new URLSearchParams(window.location.search);
+        const examId = params.get('id');
+        const session = Auth.requireRole('student');
+
+        if (session) {
+            document.getElementById('studentInfo').innerText = `${session.name} (${session.id})`;
+        }
+
+        if (!examId) {
+            // Auto-redirect to dashboard
+            window.location.href = '../student/index.html';
+            throw new Error('No ID');
+        }
+
+        // Load Exam
+        currentExam = ExamService.getExamById(examId);
+        if (!currentExam) {
+            // Auto-redirect if invalid
+            window.location.href = '../student/index.html';
+            throw new Error('Not Found');
+        }
+
+        function showError(msg) {
+            console.error(msg);
+        }
+
+        // --- Timer & State Logic ---
+        let time = 0;
+        let timerInterval = null;
+        const TIMER_KEY = `exam_start_${examId}_${session.id}`;
+
+        function initExam() {
+            // 1. Request Fullscreen
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn('Fullscreen denied:', err);
+                alert('Fullscreen is required. Please allow it.');
+            });
+
+            // 2. Hide Overlay
+            document.getElementById('startOverlay').style.display = 'none';
+
+            // 3. Setup Timer Persistence
+            const now = Date.now();
+
+            // RETAKE LOGIC: Check if this is a new attempt
+            const studentResults = ExamService.getStudentResults(session.id);
+            const previousAttempts = studentResults.filter(r => r.examId === examId);
+
+            // If we have previous attempts, we might need to reset the timer key
+            // verification: if the stored start time is OLDER than the latest result, it's an old timer
+            let startTime = localStorage.getItem(TIMER_KEY);
+
+            if (previousAttempts.length > 0 && startTime) {
+                const lastAttemptTime = Math.max(...previousAttempts.map(r => r.timestamp));
+                if (parseInt(startTime) < lastAttemptTime) {
+                    // This timer belongs to a finished attempt. Reset it.
+                    localStorage.removeItem(TIMER_KEY);
+                    startTime = null;
+                }
+            }
+
+            if (!startTime) {
+                startTime = now;
+                localStorage.setItem(TIMER_KEY, startTime);
+            }
+
+            // Calculate remaining seconds
+            const elapsedSeconds = Math.floor((now - parseInt(startTime)) / 1000);
+            time = (currentExam.duration * 60) - elapsedSeconds;
+
+            if (time <= 0) {
+                alert('Time has expired for this exam.');
+                submitExam();
+                return;
+            }
+
+            startTimer();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                time--;
+                updateTimerDisplay();
+
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            if (time < 0) time = 0;
+            const m = Math.floor(time / 60).toString().padStart(2, '0');
+            const s = (time % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }
+
+        // Fullscreen listener
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && document.getElementById('startOverlay').style.display === 'none' && document.getElementById('resultOverlay').style.display === 'none') {
+                triggerWarning();
+            }
+        });
+
+        // Initial Render
+        renderQuestionNav();
+        renderQuestion(0); // Start with first
+
+        // --- STRICT PROCTORING MODE ---
+
+        // 1. Active Focus Polling (Every 500ms)
+        setInterval(() => {
+            if (!document.hasFocus()) {
+                // Ignore if overlay is validly open
+                const startOpen = document.getElementById('startOverlay').style.display !== 'none';
+                const resultOpen = document.getElementById('resultOverlay').style.display !== 'none';
+                const warningOpen = document.getElementById('warningOverlay').style.display !== 'none';
+
+                if (!startOpen && !resultOpen && !warningOpen) {
+                    triggerWarning('Focus Lost (Active Polling)');
+                }
+            }
+
+            // Anti-Tamper: Ensure Warning Overlay is top-level
+            const warningOverlay = document.getElementById('warningOverlay');
+            if (warningOverlay) {
+                warningOverlay.style.zIndex = '2147483647';
+                if (warningOverlay.parentElement !== document.body) {
+                    document.body.appendChild(warningOverlay);
+                }
+            }
+        }, 500);
+
+        // 2. Clipboard & Interaction Lockdown
+        ['copy', 'cut', 'paste', 'dragstart', 'drop'].forEach(event => {
+            document.addEventListener(event, e => {
+                e.preventDefault();
+                if (['copy', 'cut', 'paste'].includes(event)) {
+                    triggerWarning('Clipboard Usage Prohibited');
+                }
+            });
+        });
+
+        // 3. DevTools & Key Blocking
+        document.addEventListener('keydown', (e) => {
+            // Block F12, Ctrl+Shift+I/J/C, Ctrl+U
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+                (e.ctrlKey && e.key.toLowerCase() === 'u')
+            ) {
+                e.preventDefault();
+                triggerWarning('DevTools/Inspection Attempt Detected');
+                return;
+            }
+
+            // Detect Alt+Tab, Ctrl+Tab, Win Key, Ctrl+N, Ctrl+W
+            if (
+                (e.altKey && e.key === 'Tab') ||
+                (e.ctrlKey && e.key === 'Tab') ||
+                (e.ctrlKey && e.key === 't') ||
+                (e.ctrlKey && e.key === 'n') || // New Window
+                (e.ctrlKey && e.key === 'w') || // Close Tab/Window
+                (e.metaKey)
+            ) {
+                triggerWarning('Restricted Key Combination');
+            }
+
+            // Block Reload
+            if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+                e.preventDefault();
+                triggerWarning('Reload Attempt blocked');
+            }
+        });
+
+        // 4. Context Menu Block
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        function triggerWarning(reason = 'Exam Violation Detected') {
+            if (warnings >= MAX_WARNINGS) {
+                // Auto submit
+                submitExam();
+                return;
+            }
+
+            warnings++;
+            document.getElementById('warningCountDisplay').innerText = warnings;
+            // Show reason if possible (add element or append to text)
+            const warningTitle = document.querySelector('#warningOverlay h2');
+            if (warningTitle) warningTitle.innerText = reason;
+
+            document.getElementById('warningOverlay').style.display = 'flex';
+
+            console.warn(`Warning ${warnings} triggered: ${reason}`);
+        }
+
+        function resumeExam() {
+            document.documentElement.requestFullscreen().catch(e => console.error("Fullscreen failed:", e));
+            document.getElementById('warningOverlay').style.display = 'none';
+        }
+
+        function confirmExit() {
+            if (confirm('Are you sure you want to quit? Your progress will logically be lost or unsubmitted.')) {
+                window.location.href = '../student/index.html';
+            }
+        }
+
+        function submitExam() {
+            const isSurvey = currentExam.examType === 'survey' || currentExam.isSurvey;
+            // Confirm
+            if (!confirm(`Are you sure you want to finish the ${isSurvey ? 'survey' : 'exam'}?`)) return;
+
+            // Stop Timer
+            clearInterval(timerInterval);
+
+            // Calculate Score
+            let score = 0;
+            const total = currentExam.questions.length * 10; // 10 points per question
+            const questionScores = {}; // Map: qId -> score
+
+            currentExam.questions.forEach((q, index) => {
+                let qScore = 0;
+                if (isSurvey) {
+                    // For Survey: any response counts as completed
+                    const ans = currentAnswers[q.id];
+                    if (ans !== undefined && ans !== null && ans !== '' && (!Array.isArray(ans) || ans.length > 0)) {
+                        qScore = 10;
+                    }
+                } else if (q.type === 'mcq') {
+                    if (currentAnswers[q.id] === q.correct) qScore = 10;
+                } else if (q.type === 'multi_select' || q.type === 'multiselect') {
+                    // General multi-select (if tested outside survey)
+                    if (currentAnswers[q.id] && currentAnswers[q.id].length > 0) qScore = 10;
+                } else if (q.type === 'coding') {
+                    // Advanced Scoring
+                    if (typeof codingResults[q.id] === 'number') {
+                        qScore = codingResults[q.id];
+                    }
+                } else {
+                    if (currentAnswers[q.id] && currentAnswers[q.id].trim().length > 0) qScore = 10;
+                }
+
+                questionScores[q.id] = qScore;
+                score += qScore;
+            });
+
+            const percentage = isSurvey ? 100 : Math.round((score / total) * 100);
+
+            // Time Tracking: Save time for the very last active question
+            const now = Date.now();
+            if (activeQuestionId !== null && currentQuestionStartTime !== null) {
+                const elapsed = Math.floor((now - currentQuestionStartTime) / 1000);
+                if (!questionTimeData[activeQuestionId]) questionTimeData[activeQuestionId] = 0;
+                questionTimeData[activeQuestionId] += elapsed;
+            }
+
+            const result = {
+                examId: currentExam.id,
+                studentId: session.id,
+                studentName: session.name,
+                answers: currentAnswers,
+                questionScores: questionScores, // Added for report
+                codingTestCaseData: window.codingTestCaseData || {}, // New: Total Test Cases Passed
+                questionTimeData: questionTimeData, // Added time tracking
+                score: percentage,
+                warnings: warnings,
+                isSurvey: isSurvey,
+                timestamp: Date.now()
+            };
+
+            ExamService.submitResult(result);
+
+            // If Survey, evaluate and calculate topic metrics instantly for this student
+            if (isSurvey) {
+                try {
+                    autoEvaluateSurveySubmission(currentExam, session, result);
+                } catch (e) {
+                    console.warn("Survey auto-evaluation error:", e);
+                }
+            }
+
+            // Show animated result overlay
+            showResultAnimation(percentage);
+        }
+
+        // Auto-evaluate survey responses on submission
+        function autoEvaluateSurveySubmission(exam, student, result) {
+            const keywords = exam.analysisKeywords || exam.analysisRequired?.keywords || ['Active Engagement', 'Academic Needs'];
+            const notes = exam.analysisNotes || exam.analysisRequired?.notes || '';
+            const storageKey = 'ems_survey_ai_reports_' + exam.id;
+
+            const qaList = (exam.questions || []).map((q, idx) => {
+                const ans = result.answers ? result.answers[q.id] : null;
+                let formattedAns = 'Not Answered';
+                let selectedIndices = [];
+
+                if (ans !== undefined && ans !== null) {
+                    if (q.type === 'mcq' && q.options) {
+                        const optIdx = parseInt(ans);
+                        if (!isNaN(optIdx) && q.options[optIdx]) {
+                            formattedAns = q.options[optIdx];
+                            selectedIndices = [optIdx];
+                        } else {
+                            formattedAns = String(ans);
+                        }
+                    } else if (Array.isArray(ans)) {
+                        formattedAns = ans.join(', ');
+                        if (q.options) {
+                            selectedIndices = ans.map(a => q.options.indexOf(a)).filter(i => i >= 0);
+                        }
+                    } else {
+                        formattedAns = String(ans);
+                    }
+                }
+                return {
+                    questionNumber: idx + 1,
+                    questionText: q.text || '',
+                    questionType: q.type || 'mcq',
+                    options: q.options || [],
+                    selectedIndices: selectedIndices,
+                    studentSelectedAnswer: formattedAns
+                };
+            });
+
+            // Calculate exact option-level topic score for each configured keyword
+            const targetMetrics = keywords.map(kw => {
+                const tLower = kw.toLowerCase();
+                let weightedPoints = 0;
+                let totalWeight = 0;
+
+                qaList.forEach(item => {
+                    if (item.studentSelectedAnswer === 'Not Answered') return;
+
+                    const qTextLower = item.questionText.toLowerCase();
+                    const aTextLower = item.studentSelectedAnswer.toLowerCase();
+                    
+                    // Determine relevance weight between this question and the current topic
+                    let qWeight = 1.0;
+                    if (tLower.includes('stress') || tLower.includes('burnout') || tLower.includes('depress') || tLower.includes('anxiety')) {
+                        if (qTextLower.includes('stress') || qTextLower.includes('overwhelmed') || qTextLower.includes('fatigue') || qTextLower.includes('balance') || qTextLower.includes('challenge')) {
+                            qWeight = 2.5;
+                        }
+                    } else if (tLower.includes('active') || tLower.includes('engage') || tLower.includes('learning')) {
+                        if (qTextLower.includes('engag') || qTextLower.includes('participat') || qTextLower.includes('approach') || qTextLower.includes('hackathon') || qTextLower.includes('club')) {
+                            qWeight = 2.5;
+                        }
+                    } else if (tLower.includes('career') || tLower.includes('placement') || tLower.includes('readiness')) {
+                        if (qTextLower.includes('placement') || qTextLower.includes('interview') || qTextLower.includes('career') || qTextLower.includes('technical') || qTextLower.includes('domain')) {
+                            qWeight = 2.5;
+                        }
+                    } else if (tLower.includes('mentor') || tLower.includes('faculty') || tLower.includes('guidance')) {
+                        if (qTextLower.includes('mentor') || qTextLower.includes('faculty') || qTextLower.includes('counsel') || qTextLower.includes('advisor') || qTextLower.includes('feedback')) {
+                            qWeight = 2.5;
+                        }
+                    } else if (tLower.includes('facility') || tLower.includes('infrastructure') || tLower.includes('lab') || tLower.includes('campus')) {
+                        if (qTextLower.includes('lab') || qTextLower.includes('wi-fi') || qTextLower.includes('facility') || qTextLower.includes('infrastructure') || qTextLower.includes('hostel') || qTextLower.includes('library')) {
+                            qWeight = 2.5;
+                        }
+                    }
+
+                    let questionScore = 50;
+
+                    // 1. Single Choice MCQ Calculation
+                    if (item.questionType === 'mcq' && item.options.length > 0) {
+                        const optCount = item.options.length;
+                        const selIdx = item.selectedIndices.length > 0 ? item.selectedIndices[0] : 0;
+
+                        if (tLower.includes('stress') || tLower.includes('burnout') || tLower.includes('depress') || tLower.includes('anxiety')) {
+                            // High stress options
+                            if (aTextLower.includes('constantly') || aTextLower.includes('severely') || aTextLower.includes('severe') || aTextLower.includes('burnout') || aTextLower.includes('high stress')) {
+                                questionScore = 95;
+                            } else if (aTextLower.includes('frequently') || aTextLower.includes('poor') || aTextLower.includes('challenging') || aTextLower.includes('discouraged')) {
+                                questionScore = 80;
+                            } else if (aTextLower.includes('occasionally') || aTextLower.includes('moderate') || aTextLower.includes('neutral') || aTextLower.includes('average')) {
+                                questionScore = 48;
+                            } else if (aTextLower.includes('rarely') || aTextLower.includes('never') || aTextLower.includes('excellent') || aTextLower.includes('good') || aTextLower.includes('comfortably') || aTextLower.includes('balanced')) {
+                                questionScore = 14;
+                            } else {
+                                // Default option rank calculation
+                                questionScore = Math.round((selIdx / Math.max(1, optCount - 1)) * 90) + 10;
+                            }
+                        } else {
+                            // Positive engagement / satisfaction traits
+                            if (aTextLower.includes('outstanding') || aTextLower.includes('highly') || aTextLower.includes('excellent') || aTextLower.includes('very active') || aTextLower.includes('strongly agree') || aTextLower.includes('easily accessible')) {
+                                questionScore = 96;
+                            } else if (aTextLower.includes('good') || aTextLower.includes('satisfactory') || aTextLower.includes('supportive') || aTextLower.includes('moderately') || aTextLower.includes('proactive')) {
+                                questionScore = 78;
+                            } else if (aTextLower.includes('moderate') || aTextLower.includes('neutral') || aTextLower.includes('average') || aTextLower.includes('early stage') || aTextLower.includes('aware')) {
+                                questionScore = 52;
+                            } else if (aTextLower.includes('challenging') || aTextLower.includes('dissatisfied') || aTextLower.includes('needs improvement') || aTextLower.includes('low') || aTextLower.includes('unaware') || aTextLower.includes('unclear')) {
+                                questionScore = 22;
+                            } else {
+                                // Position based scale (0 = top, optCount-1 = lowest)
+                                questionScore = Math.round(100 - (selIdx / Math.max(1, optCount - 1)) * 80);
+                            }
+                        }
+                    } 
+                    // 2. Multi-Select Calculation
+                    else if (item.questionType === 'multi_select' || item.questionType === 'multiselect' || Array.isArray(item.selectedIndices)) {
+                        const selectedCount = item.selectedIndices.length;
+                        const totalOptions = Math.max(1, item.options.length);
+
+                        if (tLower.includes('stress') || tLower.includes('burnout')) {
+                            if (qTextLower.includes('stress') || qTextLower.includes('challenge')) {
+                                questionScore = Math.min(100, Math.round((selectedCount / totalOptions) * 100));
+                            } else {
+                                questionScore = 30;
+                            }
+                        } else {
+                            // Active engagement proportional to number of selected domains / activities
+                            const ratio = selectedCount / totalOptions;
+                            if (ratio >= 0.5) questionScore = 92;
+                            else if (ratio >= 0.3) questionScore = 78;
+                            else if (ratio > 0) questionScore = 60;
+                            else questionScore = 35;
+                        }
+                    }
+                    // 3. Open Text Feedback Calculation
+                    else {
+                        const textLen = item.studentSelectedAnswer.trim().length;
+                        if (textLen > 60) questionScore = 88;
+                        else if (textLen > 20) questionScore = 72;
+                        else if (textLen > 0) questionScore = 55;
+                        else questionScore = 30;
+                    }
+
+                    weightedPoints += (questionScore * qWeight);
+                    totalWeight += qWeight;
+                });
+
+                const finalScore = totalWeight > 0 ? Math.round(weightedPoints / totalWeight) : 50;
+                
+                let level = "Moderate";
+                let badgeColor = "purple";
+                let findingText = "";
+
+                if (tLower.includes('stress') || tLower.includes('burnout') || tLower.includes('depress') || tLower.includes('anxiety')) {
+                    if (finalScore >= 60) {
+                        level = "High Concern"; badgeColor = "red";
+                        findingText = `Reported elevated stress index of ${finalScore}% driven by deadlines and academic pressure.`;
+                    } else if (finalScore >= 35) {
+                        level = "Moderate"; badgeColor = "yellow";
+                        findingText = `Managing standard academic pressure with occasional fatigue (${finalScore}%).`;
+                    } else {
+                        level = "Low / Healthy"; badgeColor = "green";
+                        findingText = `Maintaining healthy lifestyle balance and comfortable stress control (${finalScore}%).`;
+                    }
+                } else {
+                    if (finalScore >= 75) {
+                        level = "High"; badgeColor = "green";
+                        findingText = `Demonstrates strong, proactive engagement (${finalScore}%) across evaluated criteria.`;
+                    } else if (finalScore >= 50) {
+                        level = "Active / Good"; badgeColor = "purple";
+                        findingText = `Consistent participation and positive alignment (${finalScore}%).`;
+                    } else {
+                        level = "Needs Support"; badgeColor = "red";
+                        findingText = `Lower engagement score (${finalScore}%); requires proactive mentor outreach.`;
+                    }
+                }
+
+                return {
+                    metric: kw,
+                    score: finalScore,
+                    level: level,
+                    badgeColor: badgeColor,
+                    finding: findingText
+                };
+            });
+
+            const initialReport = {
+                executiveSummary: `Student ${student.name} (${student.id}) completed ${qaList.length} survey questions. Option-level evaluation indicates active participation with specific interest in technical and academic development.`,
+                overallStatus: "Evaluated on Submission",
+                targetMetrics: targetMetrics,
+                keyStrengths: [
+                    "Completed full assessment with detailed option selections",
+                    "Demonstrated clear self-awareness of academic goals and requirements"
+                ],
+                keyConcerns: [
+                    "Monitor academic workload balance and mentor interaction frequency"
+                ],
+                mentorRecommendations: "Schedule a regular 1-on-1 check-in to review technical roadmap and support academic progress.",
+                questionInferences: qaList.map(item => ({
+                    questionNumber: item.questionNumber,
+                    questionText: item.questionText,
+                    studentAnswer: item.studentSelectedAnswer,
+                    inference: `Selected '${item.studentSelectedAnswer}'.`
+                }))
+            };
+
+            // Save immediately into localStorage - No Re-Analysis Needed!
+            const allReports = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            allReports[student.id] = initialReport;
+            localStorage.setItem(storageKey, JSON.stringify(allReports));
+        }
+
+        // ═══ Post-Exam Result Animation System ═══
+
+        function showResultAnimation(percentage) {
+            const isSurvey = currentExam.examType === 'survey' || currentExam.isSurvey;
+            const overlay = document.getElementById('resultOverlay');
+            const content = document.getElementById('resultContent');
+
+            if (isSurvey) {
+                // ── SURVEY COMPLETION MODE ──
+                content.innerHTML = `
+                    <div class="celebration-emoji">📋</div>
+                    <h1 class="celebration-title">Survey Submitted!</h1>
+                    <p class="result-subtitle">
+                        Thank you for taking the time to share your valuable feedback.
+                    </p>
+                    <div class="score-orb pass" style="border-color: #a855f7; box-shadow: 0 0 40px rgba(168,85,247,0.3);">
+                        <div>
+                            <div class="score-number pass" style="color: #c084fc;">100%</div>
+                            <div class="score-label" style="color: #a78bfa;">Completed</div>
+                        </div>
+                    </div>
+                    <p class="result-subtitle" style="margin-top: 1.5rem;">
+                        🌟 Your responses have been securely recorded.
+                    </p>
+                    <button class="result-btn pass-btn" style="background: linear-gradient(135deg, #7c3aed, #a855f7);" onclick="window.location.href='../student/index.html'">
+                        ← Back to Dashboard
+                    </button>
+                `;
+                overlay.style.display = 'flex';
+                startConfetti();
+                return;
+            }
+
+            const isPassed = percentage >= 40;
+
+            if (isPassed) {
+                // ── CELEBRATION MODE (≥40%) ──
+                content.innerHTML = `
+                    <div class="celebration-emoji">🎉</div>
+                    <h1 class="celebration-title">Congratulations!</h1>
+                    <p class="result-subtitle">
+                        You've successfully completed the exam. Your hard work paid off!
+                    </p>
+                    <div class="score-orb pass">
+                        <div>
+                            <div class="score-number pass" id="animatedScore">0%</div>
+                            <div class="score-label" style="color: #a78bfa;">Final Score</div>
+                        </div>
+                    </div>
+                    <p class="result-subtitle" style="margin-top: 1.5rem;">
+                        ${percentage >= 80 ? '🌟 Outstanding performance! You\'re a star!' :
+                          percentage >= 60 ? '🔥 Great job! Keep up the excellent work!' :
+                          '✨ Well done! You passed with flying colors!'}
+                    </p>
+                    <button class="result-btn pass-btn" onclick="window.location.href='../student/index.html'">
+                        ← Back to Dashboard
+                    </button>
+                `;
+
+                overlay.style.display = 'flex';
+                animateScoreCounter(percentage);
+                startConfetti();
+
+            } else {
+                // ── CONSOLATION MODE (<40%) ──
+                content.innerHTML = `
+                    <div class="consolation-emoji">😔</div>
+                    <h1 class="consolation-title">Better Luck Next Time</h1>
+                    <p class="result-subtitle">
+                        Don't be discouraged — every attempt is a step closer to success.
+                    </p>
+                    <div class="score-orb fail">
+                        <div>
+                            <div class="score-number fail" id="animatedScore">0%</div>
+                            <div class="score-label" style="color: #64748b;">Final Score</div>
+                        </div>
+                    </div>
+                    <p class="result-subtitle" style="margin-top: 1.5rem;">
+                        📚 Review the material and try again. You've got this!
+                    </p>
+                    <button class="result-btn fail-btn" onclick="window.location.href='../student/index.html'">
+                        ← Back to Dashboard
+                    </button>
+                `;
+
+                overlay.style.display = 'flex';
+                animateScoreCounter(percentage);
+                startRainEffect();
+            }
+        }
+
+        // Animated score counter (0 → final %)
+        function animateScoreCounter(target) {
+            const el = document.getElementById('animatedScore');
+            if (!el) return;
+            let current = 0;
+            const duration = 1500; // ms
+            const startTime = Date.now();
+
+            function tick() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                current = Math.round(eased * target);
+                el.textContent = current + '%';
+                if (progress < 1) {
+                    requestAnimationFrame(tick);
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ── Confetti Paper Squares Blast ──
+        function startConfetti() {
+            const container = document.getElementById('confettiContainer');
+            container.style.display = 'block';
+            container.innerHTML = '';
+
+            const colors = [
+                '#ff006e', '#fb5607', '#ffbe0b', '#8338ec', '#3a86ff',
+                '#06d6a0', '#ef476f', '#ffd166', '#22d3ee', '#a78bfa',
+                '#ff595e', '#ffca3a', '#8ac926', '#f472b6', '#6366f1'
+            ];
+
+            function createBurst() {
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+
+                for (let i = 0; i < 60; i++) {
+                    const piece = document.createElement('div');
+                    piece.className = 'confetti-piece';
+
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const size = Math.random() * 10 + 6;
+                    const tx = (Math.random() - 0.5) * window.innerWidth * 1.2;
+                    const tyStart = (Math.random() - 0.8) * window.innerHeight * 0.6;
+                    const tyEnd = tyStart + window.innerHeight * 0.5 + Math.random() * 200;
+                    const rot = (Math.random() * 1080 - 540) + 'deg';
+                    const delay = Math.random() * 0.3;
+                    const duration = Math.random() * 1.5 + 2;
+
+                    piece.style.cssText = `
+                        left: ${cx}px;
+                        top: ${cy}px;
+                        width: ${size}px;
+                        height: ${size}px;
+                        background: ${color};
+                        --tx: ${tx}px;
+                        --ty-start: ${tyStart}px;
+                        --ty-end: ${tyEnd}px;
+                        --rot: ${rot};
+                        animation-delay: ${delay}s;
+                        animation-duration: ${duration}s;
+                        border-radius: ${Math.random() > 0.5 ? '2px' : '0'};
+                    `;
+
+                    container.appendChild(piece);
+
+                    // Remove after animation
+                    setTimeout(() => piece.remove(), (delay + duration) * 1000 + 100);
+                }
+            }
+
+            // Multiple bursts for a rich effect
+            createBurst();
+            setTimeout(createBurst, 500);
+            setTimeout(createBurst, 1200);
+            setTimeout(createBurst, 2000);
+        }
+
+        // ── Rain Effect for Consolation ──
+        function startRainEffect() {
+            const container = document.getElementById('rainContainer');
+            container.style.display = 'block';
+            container.innerHTML = '';
+
+            for (let i = 0; i < 80; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'raindrop';
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                drop.style.animationDelay = (Math.random() * 3) + 's';
+                drop.style.opacity = Math.random() * 0.5 + 0.2;
+                drop.style.height = (Math.random() * 15 + 8) + 'px';
+                container.appendChild(drop);
+            }
+        }
+
+        // Render Functions
+        function renderQuestionNav() {
+            const grid = document.getElementById('qNavGrid');
+            grid.innerHTML = '';
+            currentExam.questions.forEach((q, index) => {
+                const btn = document.createElement('div');
+                btn.className = `q-btn ${index === 0 ? 'active' : ''}`;
+                btn.innerText = index + 1;
+                btn.onclick = () => renderQuestion(index);
+
+                // Color Logic
+                if (q.type === 'coding' && codingResults[q.id] !== undefined) {
+                    const s = codingResults[q.id];
+                    if (s === 10) btn.classList.add('res-full');
+                    else if (s === 5) btn.classList.add('res-half');
+                    else if (s === 2) btn.classList.add('res-partial');
+                    else if (s === 0) btn.classList.add('res-fail');
+                } else if (currentAnswers[q.id]) {
+                    btn.classList.add('answered');
+                }
+
+                btn.id = `nav-btn-${index}`;
+                grid.appendChild(btn);
+            });
+        }
+
+        function renderQuestion(index) {
+            // Time Tracking Logic: Save time for previous question
+            const now = Date.now();
+            if (activeQuestionId !== null && currentQuestionStartTime !== null) {
+                const elapsed = Math.floor((now - currentQuestionStartTime) / 1000);
+                if (!questionTimeData[activeQuestionId]) questionTimeData[activeQuestionId] = 0;
+                questionTimeData[activeQuestionId] += elapsed;
+            }
+
+            // Update Nav Active State
+            document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`nav-btn-${index}`).classList.add('active');
+
+            const q = currentExam.questions[index];
+
+            // Start timer for new question
+            activeQuestionId = q.id;
+            currentQuestionStartTime = Date.now();
+
+            const area = document.getElementById('questionArea');
+
+            let inputHtml = '';
+            if (q.type === 'mcq') {
+                // Options (Single Select)
+                inputHtml = `<div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                    ${(q.options || []).map((opt, i) => `
+                        <label style="display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s;">
+                            <input type="radio" name="q_${q.id}" value="${i}" ${currentAnswers[q.id] === String(i) ? 'checked' : ''} onchange="saveAnswer('${q.id}', this.value, ${index})">
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                 </div>`;
+                // Hide Compiler
+                document.getElementById('compilerPanel').style.display = 'none';
+                area.parentElement.style.gridTemplateColumns = '250px 1fr'; // Full width
+            } else if (q.type === 'multi_select' || q.type === 'multiselect') {
+                // Options (Multi Select Checkboxes)
+                const currentVal = currentAnswers[q.id];
+                const selectedArr = Array.isArray(currentVal) ? currentVal : (typeof currentVal === 'string' && currentVal ? currentVal.split(',') : []);
+
+                inputHtml = `<div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: -0.5rem;">Select all options that apply:</div>
+                    ${(q.options || []).map((opt, i) => `
+                        <label style="display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem; cursor: pointer; transition: background 0.2s;">
+                            <input type="checkbox" name="q_${q.id}" value="${i}" ${selectedArr.includes(String(i)) ? 'checked' : ''} onchange="saveMultiAnswer('${q.id}', this.value, this.checked, ${index})">
+                            <span>${opt}</span>
+                        </label>
+                    `).join('')}
+                 </div>`;
+                document.getElementById('compilerPanel').style.display = 'none';
+                area.parentElement.style.gridTemplateColumns = '250px 1fr';
+            } else if (q.type === 'coding') {
+                inputHtml = `<div style="color: var(--text-muted); margin-top: 1rem;">Use the compiler on the right to write your code.</div>`;
+                // Show Compiler
+                document.getElementById('compilerPanel').style.display = 'flex';
+                // Widen editor: 250px nav | 30% question | rest editor
+                area.parentElement.style.gridTemplateColumns = '250px 30% 1fr';
+
+                // Refresh Compiler UI
+                const consoleOut = document.getElementById('consoleOutput');
+                const customIn = document.getElementById('customInput');
+                if (consoleOut) consoleOut.innerHTML = '> Ready...';
+
+                // Extract sample input / output from all possible field names
+                const sampleIn = q.testIn !== undefined && q.testIn !== null && String(q.testIn).trim() !== '' 
+                    ? String(q.testIn) 
+                    : (q.sampleInput || q.sampleIn || q.input || '');
+                const sampleOut = q.testOut !== undefined && q.testOut !== null && String(q.testOut).trim() !== '' 
+                    ? String(q.testOut) 
+                    : (q.sampleOutput || q.sampleOut || q.output || '');
+
+                if (customIn) customIn.value = sampleIn || '';
+
+                // Pre-fill code if exists
+                let defaultCode = '// Write your solution here\n// Select language above';
+                const existingCode = currentAnswers[q.id] || defaultCode;
+
+                // Initialize Monaco (Async)
+                setTimeout(() => {
+                    initMonaco(existingCode, q.id, index); // Pass question ID and index
+                }, 100);
+            } else {
+                // Text
+                inputHtml = `<textarea class="input-field" rows="10" style="width:100%;" placeholder="Type your answer / feedback here..." oninput="saveAnswer('${q.id}', this.value, ${index})">${currentAnswers[q.id] || ''}</textarea>`;
+                document.getElementById('compilerPanel').style.display = 'none';
+                area.parentElement.style.gridTemplateColumns = '250px 1fr';
+            }
+
+            // Extract sample test case for rendering
+            const sampleIn = q.testIn !== undefined && q.testIn !== null && String(q.testIn).trim() !== '' 
+                ? String(q.testIn) 
+                : (q.sampleInput || q.sampleIn || q.input || '');
+            const sampleOut = q.testOut !== undefined && q.testOut !== null && String(q.testOut).trim() !== '' 
+                ? String(q.testOut) 
+                : (q.sampleOutput || q.sampleOut || q.output || '');
+
+            area.innerHTML = `
+                <div class="fade-in" style="height: 100%; display: flex; flex-direction: column;">
+                    <h3 style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; color: var(--text-main);">Question ${index + 1}</h3>
+                    <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                        <p style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5; color: var(--text-main); font-weight: 500;">${q.text}</p>
+                        
+                        ${q.type === 'coding' && q.constraints && q.constraints.length > 0 ? `
+                            <div style="margin-top: 1.5rem;">
+                                <h4 style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Constraints</h4>
+                                <ul style="list-style-type: disc; padding-left: 1.5rem; font-size: 0.85rem; color: var(--text-main);">
+                                    ${q.constraints.map(c => `<li>${c}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${q.type === 'coding' && (sampleIn || sampleOut) ? `
+                            <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                                <h4 style="font-size: 0.85rem; color: var(--primary); margin-bottom: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    📋 Sample Test Case
+                                </h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div style="background: rgba(255,255,255,0.05); padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.08);">
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase;">Sample Input</div>
+                                        <pre style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-main); margin: 0; white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,0.3); padding: 0.5rem 0.75rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">${sampleIn || '<span style="color:var(--text-muted); font-style:italic;">No Input</span>'}</pre>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.05); padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.08);">
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase;">Sample Output</div>
+                                        <pre style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-main); margin: 0; white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,0.3); padding: 0.5rem 0.75rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">${sampleOut || '<span style="color:var(--text-muted); font-style:italic;">No Output</span>'}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${inputHtml}
+                    </div>
+                    <div style="margin-top: 2rem; display: flex; justify-content: space-between; flex-shrink: 0;">
+                        
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                ${index > 0 ? `<button class="btn btn-outline" style="min-width: 120px;" onclick="renderQuestion(${index - 1})">← Previous</button>` : ''}
+                            </div>
+                            <div>
+                                ${index < currentExam.questions.length - 1 ? `<button class="btn btn-primary" style="min-width: 120px;" onclick="renderQuestion(${index + 1})">Next →</button>` : ' <button class="btn btn-success" style="min-width: 120px;" onclick="submitExam()">Submit Exam</button>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveAnswer(qId, value, index) {
+            currentAnswers[qId] = value;
+            const btn = document.getElementById(`nav-btn-${index}`);
+            if (btn) {
+                if (value && String(value).trim()) btn.classList.add('answered');
+                else btn.classList.remove('answered');
+            }
+        }
+
+        function saveMultiAnswer(qId, optionIdx, isChecked, index) {
+            let current = currentAnswers[qId];
+            let arr = Array.isArray(current) ? current : (typeof current === 'string' && current ? current.split(',') : []);
+            const optStr = String(optionIdx);
+            if (isChecked) {
+                if (!arr.includes(optStr)) arr.push(optStr);
+            } else {
+                arr = arr.filter(x => x !== optStr);
+            }
+            currentAnswers[qId] = arr.length > 0 ? arr : null;
+            const btn = document.getElementById(`nav-btn-${index}`);
+            if (btn) {
+                if (arr.length > 0) btn.classList.add('answered');
+                else btn.classList.remove('answered');
+            }
+        }
+
+        // Monaco Editor
+        let monacoEditor = null;
+        let currentEditorDisposable = null; // Track the current listener
+
+        function initMonaco(initialValue = '// Write your code here', questionId = null, index = null) {
+            // Dispose previous listener if exists (ALWAYS do this first to prevent leaks/overlap)
+            if (currentEditorDisposable) {
+                currentEditorDisposable.dispose();
+                currentEditorDisposable = null;
+            }
+
+            if (monacoEditor) {
+                // If already init, just update value and layout
+                monacoEditor.setValue(initialValue);
+                monacoEditor.layout();
+
+                // Attach new listener if questionId is provided
+                if (questionId !== null) {
+                    currentEditorDisposable = monacoEditor.onDidChangeModelContent(() => {
+                        saveAnswer(questionId, monacoEditor.getValue(), index);
+                    });
+                }
+                return;
+            }
+
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
+            require(['vs/editor/editor.main'], function () {
+                monacoEditor = monaco.editor.create(document.getElementById('monaco-container'), {
+                    value: initialValue,
+                    language: 'c', // Default
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    fontFamily: "JetBrains Mono, monospace",
+                    fontLigatures: true,
+                    scrollBeyondLastLine: false
+                });
+
+                // Sync initial language assignment
+                updateEditorMode();
+
+                // Attach listener for the first time
+                if (questionId !== null) {
+                    currentEditorDisposable = monacoEditor.onDidChangeModelContent(() => {
+                        saveAnswer(questionId, monacoEditor.getValue(), index);
+                    });
+                }
+
+                // Re-measure fonts after web fonts finish loading
+                document.fonts.ready.then(() => {
+                    monacoEditor.updateOptions({ fontFamily: "JetBrains Mono, monospace" });
+                    monaco.editor.remeasureFonts();
+                });
+
+                // Safety net: re-measure again after 2 seconds
+                setTimeout(() => {
+                    monacoEditor.updateOptions({ fontFamily: "JetBrains Mono, monospace" });
+                    monaco.editor.remeasureFonts();
+                }, 2000);
+            });
+
+            // Block Paste
+            const container = document.getElementById('monaco-container');
+            container.addEventListener('paste', (e) => {
+                e.preventDefault();
+                alert('Paste is disabled during the exam.');
+            }, true);
+        }
+
+        function updateEditorMode() {
+            const langSelect = document.getElementById('langSelect');
+            const lang = langSelect.value;
+
+            if (monacoEditor) {
+                // Map to Monaco IDs
+                let monacoLang = lang;
+                if (lang === 'c') monacoLang = 'c';
+                else if (lang === 'cpp') monacoLang = 'cpp';
+                else if (lang === 'python') monacoLang = 'python';
+                else if (lang === 'java') monacoLang = 'java';
+                else if (lang === 'javascript') monacoLang = 'javascript';
+                else if (lang === 'csharp') monacoLang = 'csharp';
+                else if (lang === 'other') monacoLang = 'plaintext';
+                // Most others match (go, ruby, swift, rust, php)
+
+                monaco.editor.setModelLanguage(monacoEditor.getModel(), monacoLang);
+            }
+        }
+
+        // Piston API Runner
+        function processRuntimeInput(input) {
+            if (!input) return "";
+            // Normalize literal \n (two-char sequence from test case data) to real newlines
+            let normalized = input.replace(/\\n/g, '\n');
+            // Split each line's space/tab-separated tokens into separate lines
+            // so "10 20" becomes "10\n20" (two separate inputs)
+            return normalized.trim().split('\n').map(line =>
+                line.trim().split(/[ \t]+/).join('\n')
+            ).filter(s => s.length > 0).join('\n');
+        }
+
+        async function runCode() {
+            // Get Code from Monaco
+            let code = '';
+            if (monacoEditor) {
+                code = monacoEditor.getValue();
+            } else {
+                // Fallback (shouldn't happen)
+                code = '';
+            }
+
+            const outputDiv = document.getElementById('consoleOutput');
+            const lang = document.getElementById('langSelect').value;
+
+            const activeBtn = document.querySelector('.q-btn.active');
+            if (!activeBtn) return;
+            const activeIdx = parseInt(activeBtn.innerText) - 1;
+            const q = currentExam.questions[activeIdx];
+
+            outputDiv.innerHTML = `> Sending to server (${lang})...<br>`;
+
+            // Prepare Input: Use Custom Input if present, else fallback to Sample Test Case
+            const customInput = document.getElementById('customInput').value;
+            const stdin = customInput || q.testIn || "";
+
+            try {
+                const response = await fetch('http://localhost:4000/api/compile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        language: lang,
+                        version: "*",
+                        files: [
+                            {
+                                content: code
+                            }
+                        ],
+                        stdin: processRuntimeInput(stdin)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.run) {
+                    // Check Output
+                    const output = data.run.stdout;
+                    const error = data.run.stderr;
+
+                    if (error) {
+                        outputDiv.innerHTML += `<span style="color:#ef4444">Error:</span><br>${error.replace(/\n/g, '<br>')}`;
+                        codingResults[q.id] = 'FAIL';
+                    } else {
+                        outputDiv.innerHTML += `<span style="color:#22c55e">Output:</span><br>${output.replace(/\n/g, '<br>')}`;
+
+                        // Validate against Test Case Output if exists
+                        if (q.testOut) {
+                            if (output.trim() === q.testOut.trim()) {
+                                outputDiv.innerHTML += `<br>> <span style="color:var(--success)">Test Case Passed!</span>`;
+                                codingResults[q.id] = 'PASS';
+                            } else {
+                                outputDiv.innerHTML += `<br>> <span style="color:var(--danger)">Test Case Failed</span>`;
+                                outputDiv.innerHTML += `<br>> Expected: ${q.testOut.trim()}`;
+                                codingResults[q.id] = 'FAIL';
+                            }
+                        }
+                    }
+                } else {
+                    outputDiv.innerHTML += `<span style="color:orange">API Error: ${data.message || 'Unknown error'}</span>`;
+                }
+
+            } catch (err) {
+                console.error(err);
+                outputDiv.innerHTML += `<span style="color:red">Network/Server Error: ${err.message}</span>`;
+            }
+        }
+
+        async function submitCode() {
+            // Get Code
+            let code = '';
+            if (monacoEditor) {
+                code = monacoEditor.getValue();
+            } else {
+                return;
+            }
+
+            const outputDiv = document.getElementById('consoleOutput');
+            const lang = document.getElementById('langSelect').value;
+
+            const activeBtn = document.querySelector('.q-btn.active');
+            if (!activeBtn) return;
+            const activeIdx = parseInt(activeBtn.innerText) - 1;
+            const q = currentExam.questions[activeIdx];
+
+            outputDiv.innerHTML = `> <span style="color:var(--primary)">Submitting...</span><br>`;
+
+            // 1. Run Sample Test Case First
+            let samplePassed = false;
+
+            if (q.testIn) {
+                outputDiv.innerHTML += `> Checking Sample Case... `;
+                try {
+                    const response = await fetch('http://localhost:4000/api/compile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            language: lang,
+                            version: "*",
+                            files: [{ content: code }],
+                            stdin: processRuntimeInput(q.testIn)
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.run && !data.run.stderr && data.run.stdout.trim() === q.testOut.trim()) {
+                        outputDiv.innerHTML += `<span style="color:var(--success)">PASSED</span><br>`;
+                        samplePassed = true;
+                    } else {
+                        outputDiv.innerHTML += `<span style="color:var(--danger)">FAILED</span><br>`;
+                        samplePassed = false;
+                    }
+                } catch (e) {
+                    outputDiv.innerHTML += `<span style="color:red">Error</span><br>`;
+                    samplePassed = false;
+                }
+            } else {
+                // No sample case, assume passed if code runs? Or just skip to hidden.
+                // Let's assume passed for flow if no sample case defined.
+                samplePassed = true;
+            }
+
+            if (!samplePassed) {
+                outputDiv.innerHTML += `<br>> <span style="color:var(--danger)">Sample Case Failed. Score: 0/10</span>`;
+                codingResults[q.id] = 0; // Red
+                renderQuestionNav();
+                return;
+            }
+
+            // 2. Run Hidden Test Cases
+            if (!q.hiddenCases || q.hiddenCases.length === 0) {
+                // Only sample case existed and passed
+                // Rule says: "if only sample test case is passed then... 1/5th" 
+                // BUT usually if no hidden cases exist, sample is everything.
+                // However, based on user request "if sample and all hidden... full marks", "if sample and some hidden...", "if only sample..."
+                // If there are NO hidden cases, we should probably give full marks if sample passed? 
+                // Or user implies hidden cases ALWAYS exist?
+                // Let's assume if no hidden cases, 1.0 (Full) if sample passed.
+                outputDiv.innerHTML += `> <span style="color:var(--success)">Accepted! (No hidden cases). Score: 10/10</span>`;
+                codingResults[q.id] = 10;
+                renderQuestionNav();
+                return;
+            }
+
+            outputDiv.innerHTML += `> Running ${q.hiddenCases.length} Hidden Test Cases...<br>`;
+
+            let passedHidden = 0;
+            let totalHidden = q.hiddenCases.length;
+
+            for (let i = 0; i < totalHidden; i++) {
+                const testCase = q.hiddenCases[i];
+                // outputDiv.innerHTML += `> Case ${i + 1}... `; 
+                // Minimal log to save space/time perception
+
+                try {
+                    const response = await fetch('http://localhost:4000/api/compile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            language: lang,
+                            version: "*",
+                            files: [{ content: code }],
+                            stdin: processRuntimeInput(testCase.input)
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.run && !data.run.stderr && data.run.stdout.trim() === testCase.output.trim()) {
+                        passedHidden++;
+                    }
+                } catch (err) {
+                    // Fail
+                }
+            }
+
+            outputDiv.innerHTML += `> Hidden Cases Passed: ${passedHidden}/${totalHidden}<br>`;
+
+            // 3. Calculate Score & Color
+            let score = 0;
+            if (passedHidden === totalHidden) {
+                // All Hidden Passed -> Green, Full
+                score = 10;
+                outputDiv.innerHTML += `> <span style="color:var(--success)">Accepted! All Hidden Passed. Score: 10/10</span>`;
+            } else if (passedHidden > 0) {
+                // Some Hidden Passed -> Orange, Half
+                score = 5;
+                outputDiv.innerHTML += `> <span style="color:#f59e0b">Partial Acceptance. Score: 5/10</span>`;
+            } else {
+                // No Hidden Passed (Only Sample) -> Skyblue, 1/5th
+                score = 2;
+                outputDiv.innerHTML += `> <span style="color:#0ea5e9">Sample Passed Only. Score: 2/10</span>`;
+            }
+
+            codingResults[q.id] = score;
+
+            // Track Test Case Data (New)
+            if (!window.codingTestCaseData) window.codingTestCaseData = {};
+            
+            // passedHidden is count of hidden cases passed
+            // If no hidden cases, but sample passed (score 10), we can say 1/1 or just max out?
+            // Let's store: { passed: N, total: M }
+            // If totalHidden > 0: passed = passedHidden, total = totalHidden
+            // If totalHidden == 0: passed = 1, total = 1 (Sample)
+            
+            if (totalHidden > 0) {
+                window.codingTestCaseData[q.id] = { passed: passedHidden, total: totalHidden };
+            } else {
+                 if (samplePassed) window.codingTestCaseData[q.id] = { passed: 1, total: 1 };
+                 else window.codingTestCaseData[q.id] = { passed: 0, total: 1 };
+            }
+
+            renderQuestionNav();
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // Timer (Moved to startTimer)
+        // setInterval(() => { ... }, 1000);
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "vignan-mastery-frontend",
+  "version": "1.0.0",
+  "description": "Vignan Mastery Exam Portal - Frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.2"
+  }
+}
