@@ -172,19 +172,10 @@ CREATE INDEX IF NOT EXISTS idx_survey_topic_name ON survey_ai_topic_analysis(top
 CREATE INDEX IF NOT EXISTS idx_section_analytics ON survey_section_topic_analytics(exam_id, branch, section, topic_name);
 
 -- =======================================================================
--- INITIAL DEFAULT SEED DATA (Default Admin & Sample Students)
+-- INITIAL DEFAULT SEED DATA (Default Admin Only)
 -- =======================================================================
 -- Default Admin: username: admin, password: admin
 INSERT INTO admins (username, password_hash, name, role)
 VALUES ('admin', 'admin', 'System Administrator', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
--- Sample Students for Testing
-INSERT INTO students (reg_no, password_hash, name, batch, branch, section)
-VALUES 
-('211FA04001', '211FA04001', 'Aarav Sharma', '2022-2026', 'CSE', '1'),
-('211FA04002', '211FA04002', 'Bhavya Sri', '2022-2026', 'CSE', '1'),
-('211FA04003', '211FA04003', 'Chaitanya Varma', '2022-2026', 'CSE', '2'),
-('211FA04004', '211FA04004', 'Deepika Reddy', '2022-2026', 'ECE', '1'),
-('211FA04005', '211FA04005', 'Eswar Teja', '2022-2026', 'IT', '1')
-ON CONFLICT (reg_no) DO NOTHING;
