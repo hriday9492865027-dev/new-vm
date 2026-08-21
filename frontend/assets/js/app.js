@@ -4,6 +4,7 @@
 
 const DB_EXAMS = 'ems_exams';
 const DB_RESULTS = 'ems_results';
+const DB_STUDENTS = 'ems_users_db';
 
 function getApiBase() {
     return (window.location.hostname === 'localhost' && window.location.port === '3000') 
@@ -11,8 +12,8 @@ function getApiBase() {
         : '';
 }
 
+// ─── EXAMS SERVICE ────────────────────────────────────────────────────────────
 class ExamService {
-    // --- Live Cloud Fetch & Cache ---
     static async fetchLiveExams() {
         try {
             const res = await fetch(`${getApiBase()}/api/exams`);
@@ -131,12 +132,82 @@ class ExamService {
     }
 }
 
+// ─── STUDENTS SERVICE ─────────────────────────────────────────────────────────
+class StudentService {
+    static async fetchLiveStudents() {
+        try {
+            const res = await fetch(`${getApiBase()}/api/students`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && Array.isArray(data.students)) {
+                    const studentMap = {};
+                    data.students.forEach(s => {
+                        const id = (s.reg_no || s.roll_no).toUpperCase();
+                        studentMap[id] = {
+                            id: id,
+                            roll_no: id,
+                            password: s.password_hash,
+                            name: s.name,
+                            batch: s.batch,
+                            branch: s.branch,
+                            section: s.section,
+                            status: s.status || 'active',
+                            addedAt: s.created_at ? new Date(s.created_at).getTime() : Date.now()
+                        };
+                    });
+                    localStorage.setItem(DB_STUDENTS, JSON.stringify(studentMap));
+                    return studentMap;
+                }
+            }
+        } catch (e) {
+            console.warn('Live students API fetch fallback:', e);
+        }
+        return this.getStudents();
+    }
+
+    static getStudents() {
+        try {
+            return JSON.parse(localStorage.getItem(DB_STUDENTS) || '{}');
+        } catch {
+            return {};
+        }
+    }
+
+    static async saveStudentsBulk(studentList) {
+        const studentMap = this.getStudents();
+        studentList.forEach(s => {
+            const id = (s.id || s.roll_no || s.reg_no || '').toUpperCase();
+            if (id) {
+                studentMap[id] = { ...s, id };
+            }
+        });
+        localStorage.setItem(DB_STUDENTS, JSON.stringify(studentMap));
+
+        // Sync with Cloud Database
+        try {
+            await fetch(`${getApiBase()}/api/students/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ students: studentList })
+            });
+        } catch (e) {
+            console.warn('Could not sync students to live database:', e);
+        }
+    }
+
+    static async saveStudent(student) {
+        return this.saveStudentsBulk([student]);
+    }
+}
+
 window.ExamService = ExamService;
+window.StudentService = StudentService;
 
 // Auto-sync on page load
 if (typeof window !== 'undefined') {
     ExamService.fetchLiveExams().catch(() => {});
     ExamService.fetchLiveResults().catch(() => {});
+    StudentService.fetchLiveStudents().catch(() => {});
 }
 
 console.log('ExamiNation App Initialized with Cloud Database Sync');

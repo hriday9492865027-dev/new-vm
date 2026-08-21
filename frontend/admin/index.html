@@ -1323,13 +1323,13 @@ Ans: b</div>
             if (tabId === 'reports') loadReportExams();
         }
 
-        // Render Recent Exams
-        function renderExamsList() {
-            const exams = ExamService.getExams();
+        // Render Recent Exams Live From Cloud Database
+        async function renderExamsList() {
+            const exams = await ExamService.fetchLiveExams();
             document.getElementById('stat-total-exams').innerText = exams.length;
 
-            // Update Total Students Count
-            const usersDB = JSON.parse(localStorage.getItem('ems_users_db') || '{}');
+            // Update Total Students Count from Cloud DB
+            const usersDB = await StudentService.fetchLiveStudents();
             document.getElementById('stat-total-students').innerText = Object.keys(usersDB).length;
 
             const list = document.getElementById('recentExamsList');
@@ -3168,13 +3168,16 @@ Type: Text`;
                 alert(`No students were added. \n\nPlease check your column headers.\nFound Headers: ${headersFound.join(", ")}\n\nExpected columns like: StudentID, Password, Name, Branch, Section.`);
             } else {
                 localStorage.setItem('ems_users_db', JSON.stringify(usersDB));
+                // Sync with PostgreSQL Cloud Database
+                StudentService.saveStudentsBulk(Object.values(usersDB)).catch(console.warn);
                 alert(`Successfully imported/updated ${successCount} students!`);
                 renderStudents();
             }
         }
 
-        function renderStudents() {
-            const usersDB = JSON.parse(localStorage.getItem('ems_users_db') || '{}');
+        async function renderStudents() {
+            // Live fetch from database to get all students from phone/other devices
+            const usersDB = await StudentService.fetchLiveStudents();
             const tbody = document.getElementById('studentListBody');
             const searchVal = document.getElementById('studentSearchInput').value.trim().toLowerCase();
 
@@ -3184,8 +3187,8 @@ Type: Text`;
             // Filter if search exists
             if (searchVal) {
                 students = students.filter(s => 
-                    s.name.toLowerCase().includes(searchVal) || 
-                    s.id.toLowerCase().includes(searchVal)
+                    (s.name || '').toLowerCase().includes(searchVal) || 
+                    (s.id || '').toLowerCase().includes(searchVal)
                 );
             }
 
@@ -3198,32 +3201,92 @@ Type: Text`;
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <td style="padding: 0.75rem;">${s.id}</td>
                     <td style="padding: 0.75rem;">${s.name}</td>
-                    <td style="padding: 0.75rem;">${s.branch}</td>
-                    <td style="padding: 0.75rem;">${s.section || 'A'}</td>
-                    <td style="padding: 0.75rem;">${s.batch || '--'}</td>
-                    <td style="padding: 0.75rem;">
-                        <button class="btn btn-outline" 
-                            style="padding: 0.25rem 0.5rem; margin-right: 0.5rem; font-size: 0.8rem;" 
-                            data-id="${s.id.replace(/"/g, '&quot;')}"
-                            onclick="openEditStudentModal(this.getAttribute('data-id'))">Edit</button>
-                        <button class="btn btn-outline" 
-                            style="padding: 0.25rem 0.5rem; color: var(--danger); border-color: var(--danger); font-size: 0.8rem;" 
-                            data-id="${s.id.replace(/"/g, '&quot;')}"
-                            onclick="deleteStudent(this.getAttribute('data-id'))">Delete</button>
+                    <td style="padding: 0.75rem;"><span class="badge" style="background: rgba(255,255,255,0.1);">${s.branch}</span></td>
+                    <td style="padding: 0.75rem; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="editStudent('${s.id}')">Edit</button>
+                        <button class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; border-color: var(--danger); color: var(--danger);" onclick="deleteStudent('${s.id}')">Delete</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        function deleteStudent(id) {
-            if (!confirm('Are you sure you want to delete student ' + id + '?')) return;
+        async function deleteStudent(id) {
+            if (confirm(`Are you sure you want to delete student ${id}?`)) {
+                const usersDB = JSON.parse(localStorage.getItem('ems_users_db') || '{}');
+                if (usersDB[id]) {
+                    delete usersDB[id];
+                    localStorage.setItem('ems_users_db', JSON.stringify(usersDB));
+                    try {
+                        await fetch(`${getApiBase()}/api/students/${id}`, { method: 'DELETE' });
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                    renderStudents();
+                }
+            }
+        }
+
+        function editStudent(id) {
+            const usersDB = JSON.parse(localStorage.getItem('ems_users_db') || '{}');
+            const student = usersDB[id];
+            if (!student) return;
+
+            isEditingStudent = true;
+            editingStudentId = id;
+
+            document.getElementById('addStudentModalTitle').innerText = 'Edit Student';
+            document.getElementById('newStudentId').value = student.id;
+            document.getElementById('newStudentId').disabled = true; // Cannot change ID
+            document.getElementById('newStudentName').value = student.name;
+            document.getElementById('newStudentPass').value = student.password;
+            document.getElementById('newStudentBranch').value = student.branch;
+            document.getElementById('newStudentSection').value = student.section || 'A';
+            document.getElementById('newStudentBatch').value = student.batch || '';
+
+            document.getElementById('addStudentModal').style.display = 'flex';
+        }
+
+        async function saveStudent() {
+            const id = document.getElementById('newStudentId').value.trim().toUpperCase();
+            const name = document.getElementById('newStudentName').value.trim();
+            const pass = document.getElementById('newStudentPass').value.trim();
+            const branch = document.getElementById('newStudentBranch').value.trim().toUpperCase();
+            const section = document.getElementById('newStudentSection').value.trim().toUpperCase();
+            const batch = document.getElementById('newStudentBatch').value.trim();
+
+            if (!id || !name || !pass) {
+                alert("ID, Name and Password are required.");
+                return;
+            }
 
             const usersDB = JSON.parse(localStorage.getItem('ems_users_db') || '{}');
+            let addedAt = Date.now();
+
             if (usersDB[id]) {
-                delete usersDB[id];
-                localStorage.setItem('ems_users_db', JSON.stringify(usersDB));
-                renderStudents();
+                if (!isEditingStudent) {
+                    if (!confirm('Student ID ' + id + ' already exists. Overwrite?')) return;
+                }
+                addedAt = usersDB[id].addedAt || Date.now();
             }
+
+            const newStudent = {
+                id: id,
+                password: pass,
+                name: name,
+                branch: branch,
+                section: section,
+                batch: batch,
+                addedAt: addedAt
+            };
+            usersDB[id] = newStudent;
+
+            localStorage.setItem('ems_users_db', JSON.stringify(usersDB));
+            // Sync with Cloud Database
+            StudentService.saveStudent(newStudent).catch(console.warn);
+
+            alert(isEditingStudent ? 'Student updated successfully!' : 'Student added successfully!');
+            closeAddStudentModal();
+            renderStudents();
         }
 
         // --- Manual Student Addition / Editing ---
