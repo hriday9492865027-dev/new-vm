@@ -125,6 +125,39 @@ CREATE TABLE IF NOT EXISTS student_question_answers (
     total_test_cases INT DEFAULT 0
 );
 
+-- 10. SPECIAL TABLE: SURVEY AI TOPIC / KEYWORD ANALYSIS
+-- Dedicated table specifically for topic/keyword analysis evaluated by AI per student per survey
+CREATE TABLE IF NOT EXISTS survey_ai_topic_analysis (
+    id SERIAL PRIMARY KEY,
+    exam_id VARCHAR(100) NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+    student_reg_no VARCHAR(50) NOT NULL REFERENCES students(reg_no) ON DELETE CASCADE,
+    attempt_id INT REFERENCES exam_attempts(id) ON DELETE CASCADE,
+    topic_name VARCHAR(200) NOT NULL,          -- e.g. 'Academic Stress & Burnout', 'Career & Placement Readiness'
+    percentage_score NUMERIC(5,2) NOT NULL,    -- 0.00% to 100.00%
+    sentiment_score NUMERIC(5,2) DEFAULT 0,    -- -1.00 to +1.00 or 0 to 100
+    risk_level VARCHAR(50) DEFAULT 'Normal',   -- 'High Risk', 'Moderate', 'Healthy / Excellent'
+    ai_feedback TEXT,                          -- AI generated diagnostic summary for this keyword
+    key_strengths TEXT[],                      -- Specific strengths identified for this topic
+    improvement_areas TEXT[],                  -- Specific recommendations & support areas
+    evaluated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_student_survey_topic UNIQUE(exam_id, student_reg_no, topic_name)
+);
+
+-- 11. SPECIAL TABLE: SURVEY SECTION TOPIC AGGREGATES
+-- Stores computed average percentage of every section for every topic/keyword
+CREATE TABLE IF NOT EXISTS survey_section_topic_analytics (
+    id SERIAL PRIMARY KEY,
+    exam_id VARCHAR(100) NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+    batch VARCHAR(50) NOT NULL,                -- e.g. '2022-2026'
+    branch VARCHAR(50) NOT NULL,               -- e.g. 'CSE'
+    section VARCHAR(20) NOT NULL,              -- e.g. '1', '2'
+    topic_name VARCHAR(200) NOT NULL,          -- e.g. 'Mental Health & Wellbeing'
+    avg_percentage NUMERIC(5,2) NOT NULL,      -- Average percentage of all students in that section
+    participated_count INT NOT NULL DEFAULT 0, -- Total students who submitted
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_exam_section_topic UNIQUE(exam_id, batch, branch, section, topic_name)
+);
+
 -- =======================================================================
 -- INDEXES FOR ULTRA-FAST QUERIES
 -- =======================================================================
@@ -134,6 +167,9 @@ CREATE INDEX IF NOT EXISTS idx_options_question_id ON mcq_options(question_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_question_id ON test_cases(question_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_exam_student ON exam_attempts(exam_id, student_reg_no);
 CREATE INDEX IF NOT EXISTS idx_attempts_student_reg_no ON exam_attempts(student_reg_no);
+CREATE INDEX IF NOT EXISTS idx_survey_topic_exam_student ON survey_ai_topic_analysis(exam_id, student_reg_no);
+CREATE INDEX IF NOT EXISTS idx_survey_topic_name ON survey_ai_topic_analysis(topic_name);
+CREATE INDEX IF NOT EXISTS idx_section_analytics ON survey_section_topic_analytics(exam_id, branch, section, topic_name);
 
 -- =======================================================================
 -- INITIAL DEFAULT SEED DATA (Default Admin & Sample Students)
