@@ -9,11 +9,26 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Database connection helper for Vercel / Cloud PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING,
-  ssl: (process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL) ? { rejectUnauthorized: false } : undefined,
-});
+// Bulletproof database connection for Vercel / Neon / Localhost
+const connStr = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING;
+
+let poolConfig = {};
+if (connStr) {
+  poolConfig = {
+    connectionString: connStr,
+    ssl: connStr.includes('localhost') ? false : { rejectUnauthorized: false }
+  };
+} else {
+  poolConfig = {
+    user: process.env.DB_USER || process.env.POSTGRES_USER || 'postgres',
+    password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'root',
+    host: process.env.DB_HOST || process.env.POSTGRES_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || process.env.POSTGRES_DATABASE || 'vm',
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 // Compile endpoint
 app.post('/api/compile', async (req, res) => {
@@ -123,12 +138,38 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 2. STUDENTS (Fetch, Bulk Dump, Single Add)
+// 2. STUDENTS (Fetch, Bulk Dump, Single Add, Delete)
 app.get('/api/students', async (req, res) => {
   try {
     const q = await pool.query('SELECT * FROM students ORDER BY reg_no ASC');
     res.json({ success: true, students: q.rows });
   } catch (err) {
+    console.error('Fetch students error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/students', async (req, res) => {
+  try {
+    const s = req.body;
+    const regNo = (s.reg_no || s.roll_no || s.id || '').toUpperCase();
+    if (!regNo) return res.status(400).json({ success: false, error: 'Missing student ID' });
+
+    const q = await pool.query(`
+      INSERT INTO students (reg_no, password_hash, name, batch, branch, section)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (reg_no) DO UPDATE 
+      SET password_hash = EXCLUDED.password_hash,
+          name = EXCLUDED.name,
+          batch = EXCLUDED.batch,
+          branch = EXCLUDED.branch,
+          section = EXCLUDED.section
+      RETURNING *
+    `, [regNo, s.password_hash || s.password || regNo, s.name || regNo, s.batch || '2022-2026', s.branch || 'CSE', s.section || '1']);
+
+    res.json({ success: true, student: q.rows[0] });
+  } catch (err) {
+    console.error('Save student error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -165,6 +206,17 @@ app.post('/api/students/bulk', async (req, res) => {
     } finally {
       client.release();
     }
+  } catch (err) {
+    console.error('Bulk students error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/students/:id', async (req, res) => {
+  try {
+    const id = req.params.id.toUpperCase();
+    await pool.query('DELETE FROM students WHERE reg_no = $1', [id]);
+    res.json({ success: true, deletedId: id });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -211,6 +263,7 @@ app.get('/api/exams', async (req, res) => {
 
     res.json({ success: true, exams });
   } catch (err) {
+    console.error('Fetch exams error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -239,15 +292,15 @@ app.post('/api/exams', async (req, res) => {
       exam.id,
       exam.title || 'Untitled Exam',
       exam.examType || (exam.isSurvey ? 'survey' : 'standard'),
-      exam.duration || 60,
+      parseInt(exam.duration || 60),
       exam.startTime ? new Date(exam.startTime) : null,
       exam.endTime ? new Date(exam.endTime) : null,
       JSON.stringify(Array.isArray(exam.batch) ? exam.batch : [exam.batch || '2022-2026']),
       JSON.stringify(Array.isArray(exam.branch) ? exam.branch : [exam.branch || 'CSE']),
       exam.status || 'published',
-      exam.attemptLimit || 1,
-      JSON.stringify(exam.topics || []),
-      exam.totalMarks || 100
+      parseInt(exam.attemptLimit || 1),
+      JSON.stringify(exam.topics || exam.analysisKeywords || []),
+      parseInt(exam.totalMarks || 100)
     ]);
 
     if (exam.questions && Array.isArray(exam.questions)) {
@@ -264,7 +317,7 @@ app.post('/api/exams', async (req, res) => {
             marks = EXCLUDED.marks,
             topic = EXCLUDED.topic,
             order_num = EXCLUDED.order_num
-        `, [qId, exam.id, q.question || q.questionText || '', q.type || q.questionType || 'mcq', q.marks || 1, q.topic || '', i + 1]);
+        `, [qId, exam.id, q.question || q.questionText || q.text || '', q.type || q.questionType || 'mcq', parseInt(q.marks || 1), q.topic || '', i + 1]);
 
         if (q.options && Array.isArray(q.options)) {
           await client.query('DELETE FROM mcq_options WHERE question_id = $1', [qId]);
@@ -283,7 +336,7 @@ app.post('/api/exams', async (req, res) => {
             await client.query(`
               INSERT INTO test_cases (question_id, is_hidden, input_data, expected_output, weight, test_order)
               VALUES ($1, $2, $3, $4, $5, $6)
-            `, [qId, tc.isHidden || false, tc.input || '', tc.output || '', tc.weight || 1, tcIdx + 1]);
+            `, [qId, tc.isHidden || false, tc.input || '', tc.output || '', parseInt(tc.weight || 1), tcIdx + 1]);
           }
         }
       }
@@ -293,6 +346,7 @@ app.post('/api/exams', async (req, res) => {
     res.json({ success: true, examId: exam.id });
   } catch (err) {
     await client.query('ROLLBACK');
+    console.error('Save exam error:', err);
     res.status(500).json({ success: false, error: err.message });
   } finally {
     client.release();
@@ -342,6 +396,7 @@ app.post('/api/results', async (req, res) => {
 
     res.json({ success: true, attempt: insertQ.rows[0] });
   } catch (err) {
+    console.error('Save results error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -391,20 +446,23 @@ app.post('/api/survey/ai-reports', async (req, res) => {
   }
 });
 
-// Health check
+// Health check with DB diagnostics
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'disconnected';
+  let dbError = null;
   try {
-    await pool.query('SELECT 1');
-    dbStatus = 'connected';
+    const q = await pool.query('SELECT current_database(), current_user, version()');
+    dbStatus = `connected to ${q.rows[0].current_database}`;
   } catch (e) {
-    dbStatus = `error: ${e.message}`;
+    dbStatus = 'error';
+    dbError = e.message;
   }
 
   res.json({
     status: 'ok',
     environment: 'vercel-serverless',
     database: dbStatus,
+    error: dbError,
     timestamp: new Date().toISOString()
   });
 });
