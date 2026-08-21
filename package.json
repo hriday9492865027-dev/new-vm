@@ -1,9 +1,16 @@
 {
   "name": "vignan-mastery",
-  "version": "1.0.0",
-  "description": "Vignan Mastery - Next Gen Online Examination & Assessment Portal",
+  "version": "2.0.0",
+  "description": "Vignan Mastery 2.0 - Online Examination & Survey Assessment System",
+  "main": "api/index.js",
   "scripts": {
     "start:frontend": "cd frontend && node server.js",
     "start:backend": "cd backend && node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "pg": "^8.13.1",
+    "uuid": "^9.0.1"
   }
 }

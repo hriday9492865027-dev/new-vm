@@ -4,6 +4,45 @@ const path = require('path');
 const os = require('os');
 const { LANGUAGES } = require('./languages');
 
+// Fallback to Piston Engine when native compilers are unavailable (e.g., in Vercel Serverless environment)
+async function executeWithPistonFallback(langKey, code, input = '') {
+  try {
+    const pistonLangMap = {
+      python: { language: 'python', version: '3.10.0' },
+      javascript: { language: 'javascript', version: '18.15.0' },
+      c: { language: 'c', version: '10.2.0' },
+      cpp: { language: 'c++', version: '10.2.0' },
+      java: { language: 'java', version: '15.0.2' },
+    };
+
+    const target = pistonLangMap[langKey] || { language: langKey, version: '*' };
+    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: target.language,
+        version: target.version,
+        files: [{ content: code }],
+        stdin: input,
+      }),
+    });
+
+    const data = await response.json();
+    if (data && data.run) {
+      return {
+        success: data.run.code === 0 && !data.run.stderr,
+        output: data.run.stdout || '',
+        error: data.run.stderr || '',
+        executionTime: 0,
+        timedOut: false,
+      };
+    }
+  } catch (err) {
+    console.error('Piston fallback failed:', err.message);
+  }
+  return null;
+}
+
 async function executeCode(langKey, code, input = '', timeout = 5000) {
   const lang = LANGUAGES[langKey];
   if (!lang) {
@@ -16,13 +55,15 @@ async function executeCode(langKey, code, input = '', timeout = 5000) {
   }
 
   const startTime = Date.now();
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vm-code-'));
-  const fileName = (lang.needsClassName ? 'Main' : 'solution') + lang.extension;
-  const filePath = path.join(tempDir, fileName);
-
-  fs.writeFileSync(filePath, code, 'utf-8');
+  let tempDir;
 
   try {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vm-code-'));
+    const fileName = (lang.needsClassName ? 'Main' : 'solution') + lang.extension;
+    const filePath = path.join(tempDir, fileName);
+
+    fs.writeFileSync(filePath, code, 'utf-8');
+
     let runCommand;
     let runArgs = [];
 
@@ -37,6 +78,7 @@ async function executeCode(langKey, code, input = '', timeout = 5000) {
       const comp = spawn('gcc', [filePath, '-o', outPath, '-lm']);
       await new Promise((res, rej) => {
         comp.on('close', code => code === 0 ? res() : rej(new Error('Compilation Error')));
+        comp.on('error', err => rej(err));
       });
       runCommand = outPath;
     } else if (langKey === 'cpp') {
@@ -44,12 +86,14 @@ async function executeCode(langKey, code, input = '', timeout = 5000) {
       const comp = spawn('g++', [filePath, '-o', outPath, '-lm']);
       await new Promise((res, rej) => {
         comp.on('close', code => code === 0 ? res() : rej(new Error('Compilation Error')));
+        comp.on('error', err => rej(err));
       });
       runCommand = outPath;
     } else if (langKey === 'java') {
       const comp = spawn('javac', [filePath, '-d', tempDir]);
       await new Promise((res, rej) => {
         comp.on('close', code => code === 0 ? res() : rej(new Error('Compilation Error')));
+        comp.on('error', err => rej(err));
       });
       runCommand = 'java';
       runArgs = ['-cp', tempDir, 'Main'];
@@ -90,9 +134,16 @@ async function executeCode(langKey, code, input = '', timeout = 5000) {
         });
       });
 
-      proc.on('error', (err) => {
+      proc.on('error', async (err) => {
         clearTimeout(timer);
         try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+        
+        // Native execution failed (e.g. GCC/Java not installed on serverless Vercel) -> Fallback to Piston
+        const fallbackRes = await executeWithPistonFallback(langKey, code, input);
+        if (fallbackRes) {
+          return resolve(fallbackRes);
+        }
+
         resolve({
           success: false,
           output: stdout,
@@ -104,7 +155,16 @@ async function executeCode(langKey, code, input = '', timeout = 5000) {
     });
 
   } catch (err) {
-    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+    if (tempDir) {
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+    }
+
+    // Attempt cloud fallback
+    const fallbackRes = await executeWithPistonFallback(langKey, code, input);
+    if (fallbackRes) {
+      return fallbackRes;
+    }
+
     return {
       success: false,
       output: '',

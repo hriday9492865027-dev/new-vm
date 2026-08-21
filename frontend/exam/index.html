@@ -1620,12 +1620,17 @@
 
             outputDiv.innerHTML = `> Sending to server (${lang})...<br>`;
 
+            // Dynamic API URL: Use relative '/api/compile' on Vercel/Production or port 4000 on localhost
+            const compileUrl = (window.location.hostname === 'localhost' && window.location.port === '3000') 
+                ? 'http://localhost:4000/api/compile' 
+                : '/api/compile';
+
             // Prepare Input: Use Custom Input if present, else fallback to Sample Test Case
             const customInput = document.getElementById('customInput').value;
             const stdin = customInput || q.testIn || "";
 
             try {
-                const response = await fetch('http://localhost:4000/api/compile', {
+                const response = await fetch(compileUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1694,13 +1699,17 @@
 
             outputDiv.innerHTML = `> <span style="color:var(--primary)">Submitting...</span><br>`;
 
+            const compileUrl = (window.location.hostname === 'localhost' && window.location.port === '3000') 
+                ? 'http://localhost:4000/api/compile' 
+                : '/api/compile';
+
             // 1. Run Sample Test Case First
             let samplePassed = false;
 
             if (q.testIn) {
                 outputDiv.innerHTML += `> Checking Sample Case... `;
                 try {
-                    const response = await fetch('http://localhost:4000/api/compile', {
+                    const response = await fetch(compileUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1723,8 +1732,6 @@
                     samplePassed = false;
                 }
             } else {
-                // No sample case, assume passed if code runs? Or just skip to hidden.
-                // Let's assume passed for flow if no sample case defined.
                 samplePassed = true;
             }
 
@@ -1737,13 +1744,6 @@
 
             // 2. Run Hidden Test Cases
             if (!q.hiddenCases || q.hiddenCases.length === 0) {
-                // Only sample case existed and passed
-                // Rule says: "if only sample test case is passed then... 1/5th" 
-                // BUT usually if no hidden cases exist, sample is everything.
-                // However, based on user request "if sample and all hidden... full marks", "if sample and some hidden...", "if only sample..."
-                // If there are NO hidden cases, we should probably give full marks if sample passed? 
-                // Or user implies hidden cases ALWAYS exist?
-                // Let's assume if no hidden cases, 1.0 (Full) if sample passed.
                 outputDiv.innerHTML += `> <span style="color:var(--success)">Accepted! (No hidden cases). Score: 10/10</span>`;
                 codingResults[q.id] = 10;
                 renderQuestionNav();
@@ -1757,11 +1757,9 @@
 
             for (let i = 0; i < totalHidden; i++) {
                 const testCase = q.hiddenCases[i];
-                // outputDiv.innerHTML += `> Case ${i + 1}... `; 
-                // Minimal log to save space/time perception
 
                 try {
-                    const response = await fetch('http://localhost:4000/api/compile', {
+                    const response = await fetch(compileUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
