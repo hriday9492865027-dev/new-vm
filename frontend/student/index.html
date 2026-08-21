@@ -206,125 +206,119 @@
         document.getElementById('stat-avg-score').innerText = avgScore + '%';
 
 
-        // Fetch Exams
-        const exams = ExamService.getExams();
-        const container = document.getElementById('examList');
+        // Fetch Live Exams from PostgreSQL Cloud Database
+        async function loadStudentDashboard() {
+            const exams = await ExamService.fetchLiveExams();
+            const results = await ExamService.fetchLiveResults();
+            const container = document.getElementById('examList');
 
-        if (exams.length === 0) {
-            container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No exams available at the moment.</p>';
-        } else {
-            // 1. Filter by Year (Strict but loose type for safety)
-            const filteredExams = (session.role === 'admin')
-                ? exams
-                // Filter by Batch and Branch (Case Insensitive)
-                : exams.filter(e => {
-                    // 1. Batch Match (Strict)
-                    const studentBatch = String(session.batch || '').trim();
-                    let batchMatch = false;
+            if (exams.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1;">No exams available at the moment.</p>';
+            } else {
+                const filteredExams = (session.role === 'admin')
+                    ? exams
+                    : exams.filter(e => {
+                        const studentBatch = String(session.batch || '').trim();
+                        let batchMatch = false;
 
-                    if (Array.isArray(e.batch)) {
-                        batchMatch = e.batch.includes(studentBatch);
-                    } else {
-                        // Handle legacy single value or comma-separated
-                        const examBatches = String(e.batch || '').split(',').map(b => b.trim());
-                        batchMatch = examBatches.includes(studentBatch);
-                    }
+                        if (Array.isArray(e.batch)) {
+                            batchMatch = e.batch.includes(studentBatch);
+                        } else {
+                            const examBatches = String(e.batch || '').split(',').map(b => b.trim());
+                            batchMatch = examBatches.includes(studentBatch);
+                        }
 
-                    // 2. Branch Match (Strict, handles 'All')
-                    const studentBranch = String(session.branch || '').toUpperCase();
-                    let branchMatch = false;
+                        const studentBranch = String(session.branch || '').toUpperCase();
+                        let branchMatch = false;
 
-                    if (Array.isArray(e.branch)) {
-                         const upperBranches = e.branch.map(b => String(b).toUpperCase());
-                         branchMatch = upperBranches.includes('ALL') || upperBranches.includes(studentBranch);
-                    } else {
-                        const examBranch = String(e.branch || '').toUpperCase();
-                        branchMatch = examBranch === 'ALL' || examBranch === studentBranch;
-                    }
+                        if (Array.isArray(e.branch)) {
+                            const upperBranches = e.branch.map(b => String(b).toUpperCase());
+                            branchMatch = upperBranches.includes('ALL') || upperBranches.includes(studentBranch);
+                        } else {
+                            const examBranch = String(e.branch || '').toUpperCase();
+                            branchMatch = examBranch === 'ALL' || examBranch === studentBranch;
+                        }
 
-                    return batchMatch && branchMatch;
-                });
+                        return batchMatch && branchMatch;
+                    });
 
-            container.innerHTML = filteredExams.length === 0
-                ? '<p style="color:var(--text-muted); grid-column: 1/-1;">No exams available for your Batch & Branch at the moment.</p>'
-                : filteredExams.map(exam => {
-                    // Check if taken
-                    const isTaken = results.some(r => r.examId === exam.id);
-                    // Status check
-                    const isDraft = exam.status !== 'published';
+                container.innerHTML = filteredExams.length === 0
+                    ? '<p style="color:var(--text-muted); grid-column: 1/-1;">No exams available for your Batch & Branch at the moment.</p>'
+                    : filteredExams.map(exam => {
+                        const isTaken = results.some(r => r.examId === exam.id);
+                        const isDraft = exam.status !== 'published';
 
-                    // Attempt Checks
-                    const attempts = results.filter(r => r.examId === exam.id);
-                    const attemptCount = attempts.length;
-                    const limit = exam.attemptLimit || 1; // Default to 1
-                    const canAttempt = limit === -1 || attemptCount < limit;
+                        const attempts = results.filter(r => r.examId === exam.id);
+                        const attemptCount = attempts.length;
+                        const limit = exam.attemptLimit || 1;
+                        const canAttempt = limit === -1 || attemptCount < limit;
 
-                    let statusBadge;
-                    if (isDraft) {
-                        statusBadge = `<span class="status-badge" style="background:var(--surface); border:1px solid var(--border); color:var(--text-muted);">Coming Soon</span>`;
-                    } else if (attemptCount > 0) {
-                        statusBadge = `<span class="status-badge" style="background:${canAttempt ? 'rgba(108,99,255,0.15)' : 'rgba(52,211,153,0.15)'}; color:${canAttempt ? '#818cf8' : '#34d399'};">Attempts: ${attemptCount}${limit === -1 ? '' : '/' + limit}</span>`;
-                    } else {
-                        statusBadge = `<span class="status-badge status-active">Active</span>`;
-                    }
+                        let statusBadge;
+                        if (isDraft) {
+                            statusBadge = `<span class="status-badge" style="background:var(--surface); border:1px solid var(--border); color:var(--text-muted);">Coming Soon</span>`;
+                        } else if (attemptCount > 0) {
+                            statusBadge = `<span class="status-badge" style="background:${canAttempt ? 'rgba(108,99,255,0.15)' : 'rgba(52,211,153,0.15)'}; color:${canAttempt ? '#818cf8' : '#34d399'};">Attempts: ${attemptCount}${limit === -1 ? '' : '/' + limit}</span>`;
+                        } else {
+                            statusBadge = `<span class="status-badge status-active">Active</span>`;
+                        }
 
-                    // Button Logic
-                    let actionBtn;
-                    const isAdmin = session.role === 'admin';
+                        let actionBtn;
+                        const isAdmin = session.role === 'admin';
 
-                    if (isAdmin) {
-                        actionBtn = `<button class="btn btn-outline" disabled style="margin-top: auto; width: 100%; cursor: not-allowed; opacity: 0.7;">Admin View Only</button>`;
-                    } else if (isDraft) {
-                        actionBtn = `<button class="btn btn-outline" disabled style="margin-top: auto; width: 100%; opacity: 0.5; cursor: not-allowed;">Not Published</button>`;
-                    } else if (!canAttempt) {
-                        // Limit Reached - Show Report
-                        const bestScore = Math.max(...attempts.map(a => a.score));
-                        actionBtn = `
-                            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
-                                <div style="text-align: center; font-size: 0.85rem; color: var(--success); font-weight: 500;">Best Score: ${bestScore}%</div>
-                                <a href="report.html?id=${exam.id}" class="btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #3b82f6); color: white; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">📄 View Report</a>
-                            </div>
-                        `;
-                    } else {
-                        // Can Attempt (First time or Retake)
+                        if (isAdmin) {
+                            actionBtn = `<button class="btn btn-outline" disabled style="margin-top: auto; width: 100%; cursor: not-allowed; opacity: 0.7;">Admin View Only</button>`;
+                        } else if (isDraft) {
+                            actionBtn = `<button class="btn btn-outline" disabled style="margin-top: auto; width: 100%; opacity: 0.5; cursor: not-allowed;">Not Published</button>`;
+                        } else if (!canAttempt) {
+                            const bestScore = Math.max(...attempts.map(a => a.score));
+                            actionBtn = `
+                                <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                                    <div style="text-align: center; font-size: 0.85rem; color: var(--success); font-weight: 500;">Best Score: ${bestScore}%</div>
+                                    <a href="report.html?id=${exam.id}" class="btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #3b82f6); color: white; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">📄 View Report</a>
+                                </div>
+                            `;
+                        } else {
+                            const isSurvey = exam.examType === 'survey' || exam.isSurvey;
+                            const actionLabel = isSurvey 
+                                ? (attemptCount > 0 ? 'Retake Survey' : 'Start Survey')
+                                : (attemptCount > 0 ? 'Retake Exam' : 'Start Exam');
+                            actionBtn = `
+                                <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                                    <a href="../exam/index.html?id=${exam.id}" class="btn btn-primary" style="text-align: center; width: 100%; justify-content: center; ${isSurvey ? 'background: linear-gradient(135deg, #7c3aed, #a855f7); border: none;' : ''}">${actionLabel}</a>
+                                    ${attemptCount > 0 ? `<a href="report.html?id=${exam.id}" class="btn" style="width: 100%; justify-content: center; font-size: 0.85rem; background: linear-gradient(135deg, #10b981, #3b82f6); color: white; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">📄 View Report</a>` : ''}
+                                </div>
+                            `;
+                        }
+
                         const isSurvey = exam.examType === 'survey' || exam.isSurvey;
-                        const actionLabel = isSurvey 
-                            ? (attemptCount > 0 ? 'Retake Survey' : 'Start Survey')
-                            : (attemptCount > 0 ? 'Retake Exam' : 'Start Exam');
-                        actionBtn = `
-                            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
-                                <a href="../exam/index.html?id=${exam.id}" class="btn btn-primary" style="text-align: center; width: 100%; justify-content: center; ${isSurvey ? 'background: linear-gradient(135deg, #7c3aed, #a855f7); border: none;' : ''}">${actionLabel}</a>
-                                ${attemptCount > 0 ? `<a href="report.html?id=${exam.id}" class="btn" style="width: 100%; justify-content: center; font-size: 0.85rem; background: linear-gradient(135deg, #10b981, #3b82f6); color: white; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">📄 View Report</a>` : ''}
+
+                        return `
+                    <div class="exam-card fade-in" style="${isTaken ? 'opacity: 0.85; border-color: var(--success);' : ''}">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
+                                ${statusBadge}
+                                ${isSurvey ? '<span class="status-badge" style="background:rgba(168,85,247,0.18); color:#c084fc; border:1px solid rgba(168,85,247,0.35);">Survey</span>' : ''}
+                                ${isTaken ? '<span class="status-badge" style="background:var(--success); color:white;">Completed</span>' : ''}
                             </div>
-                        `;
-                    }
-
-                    const isSurvey = exam.examType === 'survey' || exam.isSurvey;
-
-                    return `
-                <div class="exam-card fade-in" style="${isTaken ? 'opacity: 0.85; border-color: var(--success);' : ''}">
-                    <div>
-                        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom: 0.5rem;">
-                            ${statusBadge}
-                            ${isSurvey ? '<span class="status-badge" style="background:rgba(168,85,247,0.18); color:#c084fc; border:1px solid rgba(168,85,247,0.35);">Survey</span>' : ''}
-                            ${isTaken ? '<span class="status-badge" style="background:var(--success); color:white;">Completed</span>' : ''}
+                            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; margin-top: 0.25rem;">${exam.title}</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                                ${exam.subject}
+                            </p>
                         </div>
-                        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; margin-top: 0.25rem;">${exam.title}</h3>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                            ${exam.subject}
-                        </p>
-                    </div>
-                    
-                    <div class="exam-meta">
-                        <span>⏱ ${exam.duration} Mins</span>
-                        <span>📝 ${exam.questions ? exam.questions.length : 0} Questions</span>
-                    </div>
+                        
+                        <div class="exam-meta">
+                            <span>⏱ ${exam.duration} Mins</span>
+                            <span>📝 ${exam.questions ? exam.questions.length : 0} Questions</span>
+                        </div>
 
-                    ${actionBtn}
-                </div>
-            `;
-                }).join('');
+                        ${actionBtn}
+                    </div>
+                `;
+                    }).join('');
+            }
         }
+
+        loadStudentDashboard();
     </script>
 </body>
 

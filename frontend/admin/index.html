@@ -1991,8 +1991,7 @@ Ans: b</div>
 
             if (action === 'delete') {
                 if (confirm('Are you sure you want to delete this exam?')) {
-                    const newExams = exams.filter(e => e.id !== selectedExamId);
-                    localStorage.setItem('ems_exams', JSON.stringify(newExams));
+                    ExamService.deleteExam(selectedExamId);
                     renderExamsList();
                     closeActionModal();
                 }
