@@ -4,155 +4,470 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Examination - Next Gen Exam Portal</title>
+    <title>Vignan Mastery 2.0 - Examination Portal</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
     <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        .nav-glass {
-            position: sticky;
-            top: 1rem;
-            z-index: 100;
-            margin: 1rem auto 2rem;
-            width: 95%;
-            max-width: 1240px;
-            padding: 0.85rem 2rem;
+        :root {
+            --bg-dark: #0a0718;
+            --navbar-bg: rgba(18, 14, 30, 0.85);
+            --modal-bg: #161528;
+            --input-bg: #0e0d1d;
+            --primary-purple: #7c3aed;
+            --primary-purple-hover: #6d28d9;
+            --accent-glow: #a855f7;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Cosmic Purple & Indigo Nebular Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: -30%;
+            width: 160%;
+            height: 160%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 45% 45% at 20% 30%, rgba(124, 58, 237, 0.35) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 80% 30%, rgba(217, 70, 239, 0.25) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 50% 70%, rgba(79, 70, 229, 0.3) 0%, transparent 65%),
+                radial-gradient(ellipse 35% 35% at 85% 75%, rgba(6, 182, 212, 0.2) 0%, transparent 60%);
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        /* Top Header Image */
+        .top-header-banner {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 110px;
+            object-fit: contain;
+            background: #ffffff;
+            margin: 0 auto;
+        }
+
+        /* Navigation Bar matching Reference */
+        .home-navbar {
+            max-width: 1180px;
+            margin: 1.5rem auto 2.5rem;
+            padding: 0.7rem 1.75rem;
+            border-radius: 9999px;
+            background: var(--navbar-bg);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 99px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 100%), rgba(14, 19, 36, 0.75);
-            backdrop-filter: blur(28px) saturate(200%);
-            -webkit-backdrop-filter: blur(28px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: inset 0 1.5px 1px 0 rgba(255,255,255,0.35), 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.15);
+            width: 92%;
         }
 
-        .hero-badge {
+        .home-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        .brand-logo-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8));
+        }
+
+        .brand-logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .brand-text-gradient {
+            background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #e879f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .btn-nav-student {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.55rem 1.4rem;
+            border-radius: 9999px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-nav-student:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .btn-nav-admin {
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a855f7 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 0.55rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-nav-admin:hover {
+            background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #9333ea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(124, 58, 237, 0.6);
+        }
+
+        /* Hero Section */
+        .hero-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 1.5rem 1.5rem 4rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero-badge-pill {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding: 0.45rem 1.25rem;
             border-radius: 9999px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
-            border: 1px solid rgba(192, 132, 252, 0.5);
-            color: #e0e7ff;
+            background: rgba(88, 28, 135, 0.35);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            color: #e9d5ff;
             font-size: 0.88rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-weight: 600;
             margin-bottom: 2rem;
-            box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 4px 20px rgba(168, 85, 247, 0.35);
-            animation: pulse 3s infinite ease-in-out;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
         }
 
-        .hero-title {
-            font-size: 3.8rem;
-            font-weight: 900;
-            line-height: 1.15;
-            letter-spacing: -0.04em;
-            margin-bottom: 1.5rem;
-            color: #ffffff;
+        .hero-main-title {
             font-family: 'Outfit', sans-serif;
+            font-size: 4.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
         }
 
-        .highlight {
-            background: linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #38bdf8 100%);
+        .title-highlight-gradient {
+            background: linear-gradient(90deg, #e879f9 0%, #a855f7 35%, #818cf8 70%, #38bdf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.45));
+            filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.4));
         }
 
-        .stat-card-premium {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 20, 38, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+        .hero-description {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            max-width: 620px;
+            line-height: 1.6;
+            margin: 0 auto 3.5rem;
+        }
+
+        /* Stat Cards Matching Reference */
+        .stats-wrapper {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 260px;
+            background: rgba(22, 18, 38, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
-            padding: 1.75rem 2.5rem;
-            box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.35), 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15);
-            backdrop-filter: blur(24px);
-            min-width: 220px;
-            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 2.25rem 2rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .stat-card-premium:hover {
-            transform: translateY(-8px) scale(1.03);
-            border-color: rgba(192, 132, 252, 0.6);
-            box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.5), 0 25px 55px rgba(0, 0, 0, 0.75), 0 0 45px rgba(168, 85, 247, 0.35);
+        .stat-box:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(124, 58, 237, 0.2);
+        }
+
+        /* Top Glowing Rim */
+        .stat-box-left {
+            border-top: 2px solid #38bdf8;
+        }
+
+        .stat-box-right {
+            border-top: 2px solid #c084fc;
+        }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 0.6rem;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        /* Modal Overlay & Card Matching Reference */
+        .modal-glass-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 4, 15, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-glass-card {
+            background: var(--modal-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(124, 58, 237, 0.2);
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 440px;
+            position: relative;
+            animation: modalPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPopIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: #ffffff;
+        }
+
+        .modal-heading {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group-custom {
+            margin-bottom: 1.35rem;
+        }
+
+        .form-label-custom {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input-custom {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--input-bg);
+            color: #ffffff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input-custom:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+        }
+
+        .form-input-custom::placeholder {
+            color: #475569;
+        }
+
+        .btn-modal-signin {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+            border: none;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(124, 58, 237, 0.45);
+            margin-top: 0.75rem;
+        }
+
+        .btn-modal-signin:hover {
+            background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(124, 58, 237, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .hero-main-title {
+                font-size: 2.8rem;
+            }
+            .home-navbar {
+                padding: 0.6rem 1rem;
+            }
+            .home-brand {
+                font-size: 1.15rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <img src="assets/img/vignan_header.png" alt="Header"
-        style="display: block; width: 100%; height: auto; max-height: 120px; object-fit: contain; background: white; margin: 0 auto; ">
+    <!-- Top Accreditation Header Banner -->
+    <img src="assets/img/vignan_header.png" alt="Vignan's Institute of Information Technology" class="top-header-banner">
+
     <div class="main-wrapper">
-        <!-- Navigation -->
-        <nav class="nav-glass">
-            <div class="logo"
-                style="font-size: 1.45rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.65rem; font-family: 'Outfit', sans-serif;">
-                <img src="assets/img/Logo.png" alt="Logo" style="height: 38px; width: auto; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">
-                <span>VIGNAN <span class="highlight">MASTERY</span></span>
+        <!-- Floating Pill Navigation Bar -->
+        <nav class="home-navbar">
+            <div class="home-brand">
+                <div class="brand-logo-icon">
+                    <img src="assets/img/Logo.png" alt="Vignan Mastery Logo">
+                </div>
+                <span>VIGNAN <span class="brand-text-gradient">MASTERY 2.0</span></span>
             </div>
-            <div class="auth-buttons" style="display: flex; gap: 0.75rem; align-items: center;">
-                <button onclick="showLoginModal('student')" class="btn btn-outline">🎓 Student Login</button>
-                <button onclick="showLoginModal('admin')" class="btn btn-primary">⚡ Admin Portal</button>
+            <div class="nav-actions">
+                <button onclick="showLoginModal('student')" class="btn-nav-student">Student Login</button>
+                <button onclick="showLoginModal('admin')" class="btn-nav-admin">Admin Portal</button>
             </div>
         </nav>
 
         <!-- Hero Section -->
-        <section class="container"
-            style="padding-top: 2rem; min-height: 80vh; display: flex; flex-direction: column; align-items: center; text-align: center;">
-            <div class="fade-in">
-                <div class="hero-badge">
-                    ✨ NEXT-GENERATION ASSESSMENT PLATFORM
+        <section class="hero-container">
+            <!-- Badge -->
+            <div class="hero-badge-pill">
+                🚀 The #1 Exam Platform
+            </div>
+
+            <!-- Title -->
+            <h1 class="hero-main-title">
+                "It always seems <br>
+                <span class="title-highlight-gradient">impossible</span> until it's done"
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="hero-description">
+                Participate exams with integrity and style. A beautiful world with technology will be yours
+            </p>
+
+            <!-- Stat Cards -->
+            <div class="stats-wrapper">
+                <div class="stat-box stat-box-left">
+                    <div class="stat-number">6000+</div>
+                    <div class="stat-label">Active Students</div>
                 </div>
-                <h1 class="hero-title">
-                    "It always seems <br>
-                    <span class="highlight">impossible</span> until it's done"
-                </h1>
-                <p
-                    style="font-size: 1.25rem; color: #cbd5e1; max-width: 650px; margin: 0 auto 3rem; line-height: 1.65;">
-                    Empowering students and faculty with real-time psychometric intelligence, coding evaluation, and automated survey insights.
-                </p>
-                <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
-                    <div class="stat-card-premium">
-                        <h3 style="color: #ffffff; font-size: 2.75rem; font-weight: 900; margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">6000+</h3>
-                        <p style="color: #94a3b8; font-weight: 600; font-size: 0.95rem;">Active Students</p>
-                    </div>
-                    <div class="stat-card-premium">
-                        <h3 style="color: #ffffff; font-size: 2.75rem; font-weight: 900; margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #ffffff 40%, #4ade80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">99.9%</h3>
-                        <p style="color: #94a3b8; font-weight: 600; font-size: 0.95rem;">Platform Reliability</p>
-                    </div>
+                <div class="stat-box stat-box-right">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Platform Uptime</div>
                 </div>
             </div>
         </section>
 
         <!-- Login Modal (Hidden by default) -->
         <div id="loginModal" style="display: none;" class="modal-glass-overlay">
-            <div class="modal-glass-content" style="max-width: 480px;">
-                <button onclick="hideLoginModal()"
-                    style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+            <div class="modal-glass-card">
+                <button onclick="hideLoginModal()" class="modal-close-btn">&times;</button>
 
-                <h2 id="modalTitle" style="margin-bottom: 1.75rem; text-align: center; font-size: 1.75rem; font-family: 'Outfit', sans-serif;">Login</h2>
+                <h2 id="modalTitle" class="modal-heading">Admin Access</h2>
 
                 <form id="loginForm" onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label>ID / Username</label>
-                        <input type="text" id="username" class="input-field" placeholder="Enter your ID" required>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">ID / Username</label>
+                        <input type="text" id="username" class="form-input-custom" placeholder="Enter your ID" required>
                     </div>
-                    <div class="input-group" id="studentDetailsGroup"
-                        style="display:none; grid-template-columns: 1fr 1fr; gap: 1rem;">
+
+                    <div class="form-group-custom" id="studentDetailsGroup" style="display:none; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label>Section</label>
-                            <input type="text" id="loginSection" class="input-field" placeholder="e.g. 1" maxlength="1" pattern="\d" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                            <label class="form-label-custom">Section</label>
+                            <input type="text" id="loginSection" class="form-input-custom" placeholder="e.g. 1" maxlength="1" pattern="\d" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
                         </div>
                         <div>
-                            <label>Branch</label>
-                            <select id="loginBranch" class="input-field">
+                            <label class="form-label-custom">Branch</label>
+                            <select id="loginBranch" class="form-input-custom">
                                 <option value="CSE">CSE</option>
                                 <option value="ECE">ECE</option>
                                 <option value="EEE">EEE</option>
@@ -165,8 +480,8 @@
                             </select>
                         </div>
                         <div style="grid-column: 1 / -1;">
-                            <label>Batch</label>
-                            <select id="loginBatch" class="input-field">
+                            <label class="form-label-custom">Batch</label>
+                            <select id="loginBatch" class="form-input-custom">
                                 <option value="2022-2026">2022-2026</option>
                                 <option value="2023-2027">2023-2027</option>
                                 <option value="2024-2028">2024-2028</option>
@@ -174,22 +489,21 @@
                             </select>
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label>Password</label>
+
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Password</label>
                         <div style="position: relative;">
-                            <input type="password" id="password" class="input-field" placeholder="Enter password"
-                                required style="padding-right: 2.75rem;">
-                            <button type="button" onclick="togglePassword()"
-                                style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted);">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <input type="password" id="password" class="form-input-custom" placeholder="Enter password" required style="padding-right: 2.75rem;">
+                            <button type="button" onclick="togglePassword()" style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 0.5rem;">Sign In</button>
+
+                    <button type="submit" class="btn-modal-signin">Sign In</button>
                 </form>
             </div>
         </div>
@@ -239,12 +553,12 @@
                 }
             } else {
                 if (userIn) {
-                    userIn.placeholder = 'Enter Admin Username (admin)';
+                    userIn.placeholder = 'Enter your ID';
                     userIn.style.textTransform = 'none';
                     userIn.oninput = null;
                 }
                 if (passIn) {
-                    passIn.placeholder = 'Enter Admin Password';
+                    passIn.placeholder = 'Enter password';
                     passIn.style.textTransform = 'none';
                     passIn.oninput = null;
                 }
@@ -255,38 +569,66 @@
             }, 100);
         }
 
-        // Backward compatibility alias
-        function showLoginModel(role) {
-            showLoginModal(role);
-        }
-
         function hideLoginModal() {
             modal.style.display = 'none';
         }
 
-        // Close on clicking outside
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) hideLoginModal();
-        });
+        function togglePassword() {
+            const pass = document.getElementById('password');
+            pass.type = pass.type === 'password' ? 'text' : 'password';
+        }
 
-        // Close on Escape key
-        document.addEventListener('keydown', (e) => {
+        // Close on click outside
+        window.onclick = function (event) {
+            if (event.target === modal) {
+                hideLoginModal();
+            }
+        }
+
+        // Close on Escape
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && modal.style.display === 'flex') {
                 hideLoginModal();
             }
         });
 
-        function togglePassword() {
-            const input = document.getElementById('password');
-            if (input) {
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    setTimeout(() => {
-                        input.type = 'password';
-                    }, 2500);
+        // Async Login handling
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+
+            const sec = document.getElementById('loginSection') ? document.getElementById('loginSection').value.trim() : '';
+            const br = document.getElementById('loginBranch') ? document.getElementById('loginBranch').value.trim() : '';
+            const batch = document.getElementById('loginBatch') ? document.getElementById('loginBatch').value.trim() : '';
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Authenticating...';
+
+            try {
+                const user = await Auth.login(u, p, window.currentRole, {
+                    section: sec,
+                    branch: br,
+                    batch: batch
+                });
+
+                if (user) {
+                    if (user.role === 'admin') {
+                        window.location.href = 'admin/index.html';
+                    } else {
+                        window.location.href = 'student/index.html';
+                    }
                 } else {
-                    input.type = 'password';
+                    alert('Invalid Credentials! Please try again.');
                 }
+            } catch (err) {
+                console.error(err);
+                alert('Authentication failed.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
             }
         }
     </script>
